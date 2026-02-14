@@ -10,10 +10,10 @@ export default function ProgressStepper({ stages, currentStage }) {
                         <div className="flex flex-col items-center">
                             <div
                                 className={`w-11 h-11 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-300 shadow-lg ${isActive
-                                    ? 'bg-white text-[#6366F1] ring-4 ring-white/30 scale-110'
+                                    ? 'bg-[#6366F1] text-white ring-4 ring-[#6366F1]/30 scale-110'
                                     : isCompleted
-                                        ? 'bg-green-400 text-white'
-                                        : 'bg-white/20 text-white/60 backdrop-blur-sm'
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-gray-700 text-gray-400 backdrop-blur-sm'
                                     }`}
                             >
                                 {isCompleted ? (
@@ -24,15 +24,16 @@ export default function ProgressStepper({ stages, currentStage }) {
                                     index + 1
                                 )}
                             </div>
-                            <span className={`mt-2 text-xs font-semibold transition-all ${isActive ? 'text-white scale-105' : 'text-blue-200'}`}>
+                            <span className={`mt-2 text-xs font-semibold transition-all ${isActive ? 'text-white scale-105' : 'text-gray-400'}`}>
                                 {stage}
                             </span>
                         </div>
                         {index < stages.length - 1 && (
                             <div
-                                className={`w-16 h-1 mx-2 rounded-full transition-all duration-300 ${isCompleted ? 'bg-green-400 shadow-glow' : 'bg-white/20'
+                                className={`w-16 h-1 mx-2 rounded-full transition-all duration-300 ${isCompleted ? 'bg-green-500 shadow-glow' : 'bg-gray-700'
                                     }`}
                             />
+                        )}
                         )}
                     </div>
                 );

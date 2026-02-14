@@ -59,6 +59,84 @@ export default function useInterviewLogic() {
         }, 500);
     };
 
+    const saveInterviewResults = (finalMessages, candidateData) => {
+        // Generate scorecard data
+        const scorecard = generateScorecard(finalMessages, candidateData);
+
+        // Get existing results
+        const existing = localStorage.getItem('interviewResults');
+        const results = existing ? JSON.parse(existing) : [];
+
+        // Add new result
+        results.push(scorecard);
+
+        // Save to localStorage
+        localStorage.setItem('interviewResults', JSON.stringify(results));
+    };
+
+    const generateScorecard = (messageList, candidateData) => {
+        // Analyze messages to generate scores
+        const userMessages = messageList.filter(m => m.role === 'user');
+        const avgLength = userMessages.reduce((sum, m) => sum + m.content.length, 0) / userMessages.length;
+
+        // Simple scoring logic (could be enhanced with AI)
+        const technicalScore = Math.min(10, Math.floor(avgLength / 50) + 5);
+        const communicationScore = Math.min(10, Math.floor(avgLength / 60) + 5);
+        const overallScore = Math.floor((technicalScore + communicationScore) / 2);
+
+        // Determine verdict
+        let verdict = 'Requires Human Interview';
+        if (overallScore >= 8) verdict = 'Hire';
+        else if (overallScore < 6) verdict = 'No Hire';
+
+        // Extract strengths and risks from responses
+        const strengths = [];
+        const risks = [];
+
+        userMessages.forEach((msg, idx) => {
+            if (msg.content.length > 150) {
+                strengths.push({
+                    title: `Strong Response ${idx + 1}`,
+                    description: `Provided detailed and comprehensive answer demonstrating ${idx < 2 ? 'technical depth' : 'communication skills'}.`,
+                    evidence: msg.content.substring(0, 100) + '...'
+                });
+            } else if (msg.content.length < 50) {
+                risks.push({
+                    title: `Brief Response ${idx + 1}`,
+                    description: 'Response could have included more detail and specific examples.',
+                    evidence: msg.content
+                });
+            }
+        });
+
+        // Generate follow-up questions
+        const followUpQuestions = [
+            `Can you provide more specific examples of ${candidateData.role.toLowerCase()} work you've done?`,
+            `How do you stay updated with the latest ${candidateData.role.toLowerCase()} technologies and best practices?`,
+            `What are your long-term career goals in ${candidateData.role.toLowerCase()} development?`
+        ];
+
+        return {
+            id: Date.now().toString(),
+            name: candidateData.name,
+            email: candidateData.email,
+            role: candidateData.role,
+            experience: candidateData.experience,
+            keySkills: candidateData.keySkills,
+            completedAt: new Date().toISOString(),
+            verdict,
+            scores: {
+                technical: technicalScore,
+                communication: communicationScore,
+                overall: overallScore
+            },
+            strengths,
+            risks,
+            followUpQuestions,
+            messages: messageList
+        };
+    };
+
     const handleCandidateResponse = async (userInput) => {
         // Add user message
         const newMessages = [...messages, { role: 'user', content: userInput }];
@@ -80,10 +158,15 @@ export default function useInterviewLogic() {
         if (currentStage === INTERVIEW_STAGES.length - 1 && shouldAdvanceStage(newMessages.length, currentStage)) {
             setTimeout(() => {
                 setIsCompleted(true);
-                setMessages(prev => [...prev, {
+                const completionMessage = {
                     role: 'ai',
                     content: "Thank you for completing the interview! Your responses have been recorded and a comprehensive scorecard will be generated. We'll be in touch soon regarding the next steps. Have a great day!"
-                }]);
+                };
+                const finalMessages = [...newMessages, completionMessage];
+                setMessages(finalMessages);
+
+                // Save interview results to localStorage
+                saveInterviewResults(finalMessages, candidateInfo);
             }, 1000);
         }
         // Advance stage based on conversation length (but not past the last stage)
@@ -106,59 +189,41 @@ export default function useInterviewLogic() {
     };
 
     const shouldAdvanceStage = (messageCount, stage) => {
-        // Stage 0 (Technical): After 2 exchanges
+        // DEV MODE: 1 question per stage
+        // Stage 0 (Technical): After 1 exchange (2 messages: AI question + user answer)
         if (stage === 0) {
-            return messageCount >= 5;
+            return messageCount >= 3; // greeting + user response = 3 total
         }
-        // Stage 1 (Communication): After 2 exchanges
+        // Stage 1 (Communication): After 1 exchange
         if (stage === 1) {
-            return messageCount >= 9;
+            return messageCount >= 5; // previous + question + answer = 5 total
         }
-        // Stage 2 (Wrap-up): After 2 exchanges, don't advance (end of interview)
+        // Stage 2 (Wrap-up): After 1 exchange, don't advance (end of interview)
         if (stage === 2) {
-            return messageCount >= 13;
+            return messageCount >= 7; // previous + question + answer = 7 total
         }
         return false;
     };
 
     const generateAIResponse = (stage, userInput, messageCount, originalInput) => {
-        const inputLower = userInput.toLowerCase();
-        const isDetailedResponse = userInput.length > 100;
-        const isSophisticated = userInput.split(' ').length > 50;
+        // DEV MODE: Simple acknowledgment, no follow-up questions within stage
 
         if (stage === 0) {
-            const roleQuestions = selectedRole ? ROLE_SPECIFIC_QUESTIONS[selectedRole] : [];
-
-            if (isSophisticated) {
-                // Shift to more complex topics
-                return "That's a very sophisticated answer showing deep technical understanding. Let me probe further with an architectural question: How would you scale this solution to handle 10x the traffic? What would be your key considerations and trade-offs?";
-            } else if (!isDetailedResponse) {
-                // Probe for more depth
-                return "I'd like to understand more depth here. Can you walk me through the specific technical decisions you made? What alternatives did you consider, and why did you choose this particular approach?";
-            } else {
-                // Continue with role-specific questions
-                const questionIndex = technicalQuestionCount % (roleQuestions.length || 1);
-                setTechnicalQuestionCount(prev => prev + 1);
-                return roleQuestions[questionIndex] || "Excellent explanation. Tell me about another technical challenge you've faced. How did you approach debugging or troubleshooting the issue?";
-            }
+            // Technical stage - acknowledge response
+            return "Thank you for that detailed technical explanation. I can see you have solid experience in this area.";
         }
 
         if (stage === 1) {
-            // Communication Assessment
-            const responses = [
-                "That's a great example of effective communication. How do you typically handle situations where there's miscommunication or conflicting priorities between technical and business teams?",
-                "Good approach to explaining technical concepts. Tell me about a time when you had to work with a difficult team member or stakeholder. How did you handle the situation?",
-                "I appreciate that example. In your experience, what strategies work best for ensuring everyone on the team is aligned, especially in remote or distributed settings?"
-            ];
-            return responses[Math.floor(Math.random() * responses.length)];
+            // Communication Assessment - acknowledge response
+            return "That's a great example of effective communication. I appreciate how you handled that situation.";
         }
 
         if (stage === 2) {
-            // Wrap-up
-            return "Thank you for that insight. I'm now compiling a comprehensive scorecard based on our conversation, including your technical depth, problem-solving approach, and communication skills. Is there anything else you'd like to add before we conclude?";
+            // Wrap-up - acknowledge final response
+            return "Thank you for sharing that. I'm now compiling your comprehensive scorecard based on our conversation.";
         }
 
-        return "Thank you for sharing that. Can you tell me more?";
+        return "Thank you for sharing that.";
     };
 
     return {
