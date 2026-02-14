@@ -40,6 +40,22 @@ export default function InterviewPage() {
         handleAIMessage
     } = useInterviewLogic();
 
+    // 5-minute auto-end timer
+    useEffect(() => {
+        if (!sessionId || showForm) return;
+
+        console.log('[Interview] Starting 5-minute timer');
+        const timer = setTimeout(() => {
+            console.log('[Interview] ⏰ Time expired - auto-ending interview');
+            endInterview();
+        }, 5 * 60 * 1000); // 5 minutes
+
+        return () => {
+            console.log('[Interview] Clearing timer');
+            clearTimeout(timer);
+        };
+    }, [sessionId, showForm]);
+
     // Load session if sessionId is in URL
     useEffect(() => {
         const loadSession = async () => {
@@ -134,20 +150,34 @@ export default function InterviewPage() {
         setIsEvaluating(true);
 
         try {
+            console.log('[Interview] Ending interview, session ID:', sessionId);
             const response = await fetch(`${API_BASE_URL}/interviews/api/sessions/${sessionId}/end/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
 
-            const data = await response.json();
-            console.log('Interview ended, scorecard:', data);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
 
-            // Redirect to home page
-            navigate('/');
+            const data = await response.json();
+            console.log('[Interview] ✅ Interview ended successfully');
+            console.log('[Interview] Session completed:', data.is_completed);
+            console.log('[Interview] Overall score:', data.overall_score);
+            console.log('[Interview] Current stage:', data.current_stage);
+            console.log('[Interview] Full response:', data);
+
+
+            // Wait a moment to ensure backend processing is complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Redirect to results page with scorecard data
+            navigate('/results', { state: { scorecard: data } });
         } catch (err) {
-            console.error("Failed to end interview:", err);
+            console.error("[Interview] ❌ Failed to end interview:", err);
+            console.error("[Interview] Error details:", err.message);
             // Still redirect even if there's an error
-            navigate('/');
+            setTimeout(() => navigate('/'), 1000);
         } finally {
             setIsEvaluating(false);
         }

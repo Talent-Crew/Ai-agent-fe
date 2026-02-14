@@ -14,6 +14,24 @@ export default function useSpeechToText(options = {}) {
   const interviewWsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
+  
+  // Store callbacks in refs to avoid recreating Centrifuge connection
+  const callbacksRef = useRef({
+    onTextMessage,
+    onAudioPlay,
+    onAudioEnded,
+    onAudioPause
+  });
+
+  // Update callbacks ref when they change
+  useEffect(() => {
+    callbacksRef.current = {
+      onTextMessage,
+      onAudioPlay,
+      onAudioEnded,
+      onAudioPause
+    };
+  }, [onTextMessage, onAudioPlay, onAudioEnded, onAudioPause]);
 
   useEffect(() => {
     const hasGetUserMedia = typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia != null;
@@ -30,22 +48,22 @@ export default function useSpeechToText(options = {}) {
     createCentrifugeConnection(sessionId, token, {
       onTextMessage: (message) => {
         console.log('[Centrifugo] Text message received:', message);
-        if (onTextMessage) onTextMessage(message);
+        if (callbacksRef.current.onTextMessage) callbacksRef.current.onTextMessage(message);
       },
       onTtsAudio: (audioBase64) => {
         console.log('[Centrifugo] TTS audio received');
         playTts(audioBase64, {
           onPlay: () => {
             console.log('[TTS] Audio started playing');
-            if (onAudioPlay) onAudioPlay();
+            if (callbacksRef.current.onAudioPlay) callbacksRef.current.onAudioPlay();
           },
           onEnded: () => {
             console.log('[TTS] Audio ended');
-            if (onAudioEnded) onAudioEnded();
+            if (callbacksRef.current.onAudioEnded) callbacksRef.current.onAudioEnded();
           },
           onPause: () => {
             console.log('[TTS] Audio paused');
-            if (onAudioPause) onAudioPause();
+            if (callbacksRef.current.onAudioPause) callbacksRef.current.onAudioPause();
           }
         });
       },
@@ -66,7 +84,7 @@ export default function useSpeechToText(options = {}) {
         }, 100);
       }
     };
-  }, [sessionId, token, onTextMessage, onAudioPlay, onAudioEnded, onAudioPause]);
+  }, [sessionId, token]); // Only reconnect when sessionId or token changes
 
   // Cleanup on unmount
   useEffect(() => {

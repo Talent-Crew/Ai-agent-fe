@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { api } from '../lib/api';
+import { Languages } from 'lucide-react';
 
 export default function InterviewConfiguration() {
     const [saveStatus, setSaveStatus] = useState('');
@@ -72,7 +73,7 @@ export default function InterviewConfiguration() {
                 title: formData.title,
                 stack: formData.stack.split(',').map(s => s.trim()),
                 rubric_template: {
-                    primary_language: formData.primary_language,
+                    Languages: formData.Languages.split(',').map(s => s.trim()),
                     experience_level: formData.experience_level,
                     core_skills: formData.core_skills.split(',').map(s => s.trim()),
                     evaluation_focus: formData.evaluation_focus.split(',').map(s => s.trim()),
