@@ -1,7 +1,7 @@
 import useSpeechToText from '../../hooks/useSpeechToText';
 
-export default function InputController({ sessionId, disabled }) {
-  const { isSupported, error, isListening } = useSpeechToText({ sessionId });
+export default function InputController({ sessionId, token, onTextMessage, disabled }) {
+  const { isSupported, error, isListening } = useSpeechToText({ sessionId, token, onTextMessage });
 
   return (
     <div className="border-t border-slate-200 bg-white shadow-lg px-6 py-5">
