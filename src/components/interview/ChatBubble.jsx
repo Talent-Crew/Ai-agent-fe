@@ -21,8 +21,8 @@ export default function ChatBubble({ message, isAI, isThinking = false }) {
                 {/* Message Bubble */}
                 <div
                     className={`px-5 py-3.5 rounded-2xl shadow-md ${isAI
-                        ? 'bg-white border border-slate-100 text-slate-800'
-                        : 'bg-gradient-to-r from-[#007ABF] to-[#0062A3] text-white'
+                        ? 'bg-gray-800 border border-gray-700 text-gray-100'
+                        : 'bg-gradient-to-r from-[#6366F1] to-[#4F46E5] text-white'
                         }`}
                 >
                     {isThinking ? (
@@ -32,7 +32,7 @@ export default function ChatBubble({ message, isAI, isThinking = false }) {
                                 <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                                 <div className="w-2 h-2 bg-[#6366F1] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                             </div>
-                            <span className="text-sm text-slate-500 font-medium">AI is analyzing...</span>
+                            <span className="text-sm text-gray-400 font-medium">AI is analyzing...</span>
                         </div>
                     ) : (
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{message}</p>

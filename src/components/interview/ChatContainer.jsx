@@ -13,7 +13,7 @@ export default function ChatContainer({ messages, isThinking }) {
     return (
         <div
             ref={containerRef}
-            className="flex-1 overflow-y-auto p-8 bg-gradient-to-b from-slate-50 to-slate-100"
+            className="flex-1 overflow-y-auto p-8 bg-gradient-to-b from-gray-900 to-black"
             style={{ maxHeight: 'calc(100vh - 280px)' }}
         >
             <div className="max-w-4xl mx-auto">
