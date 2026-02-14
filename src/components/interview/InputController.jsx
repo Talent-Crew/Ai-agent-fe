@@ -1,7 +1,22 @@
+import { useEffect } from 'react';
 import useSpeechToText from '../../hooks/useSpeechToText';
 
-export default function InputController({ sessionId, token, onTextMessage, disabled }) {
-  const { isSupported, error, isListening } = useSpeechToText({ sessionId, token, onTextMessage });
+export default function InputController({ sessionId, token, onTextMessage, onWebSocketReady, onAudioPlay, onAudioEnded, onAudioPause, disabled }) {
+  const { isSupported, error, isListening, interviewWsRef } = useSpeechToText({
+    sessionId,
+    token,
+    onTextMessage,
+    onAudioPlay,
+    onAudioEnded,
+    onAudioPause
+  });
+
+  // Notify parent when WebSocket is ready
+  useEffect(() => {
+    if (onWebSocketReady && interviewWsRef) {
+      onWebSocketReady(interviewWsRef);
+    }
+  }, [interviewWsRef, onWebSocketReady]);
 
   return (
     <div className="border-t border-slate-200 bg-white shadow-lg px-6 py-5">

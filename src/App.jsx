@@ -14,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/interview" element={<InterviewPage />} />
+        <Route path="/interview/:sessionId" element={<InterviewPage />} />
         <Route path="/recruiter/auth" element={<RecruiterAuth />} />
         <Route
           path="/recruiter"

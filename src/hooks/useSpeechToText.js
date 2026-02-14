@@ -4,7 +4,7 @@ import { connectInterviewWs } from '../lib/interviewWs';
 import { playTts } from '../lib/playTts';
 
 export default function useSpeechToText(options = {}) {
-  const { sessionId, token, onTextMessage } = options;
+  const { sessionId, token, onTextMessage, onAudioPlay, onAudioEnded, onAudioPause } = options;
 
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
@@ -26,7 +26,7 @@ export default function useSpeechToText(options = {}) {
     if (!sessionId || !token) return;
 
     console.log('[Interview] Connecting to Centrifuge for message receive...');
-    
+
     createCentrifugeConnection(sessionId, token, {
       onTextMessage: (message) => {
         console.log('[Centrifugo] Text message received:', message);
@@ -34,7 +34,20 @@ export default function useSpeechToText(options = {}) {
       },
       onTtsAudio: (audioBase64) => {
         console.log('[Centrifugo] TTS audio received');
-        playTts(audioBase64);
+        playTts(audioBase64, {
+          onPlay: () => {
+            console.log('[TTS] Audio started playing');
+            if (onAudioPlay) onAudioPlay();
+          },
+          onEnded: () => {
+            console.log('[TTS] Audio ended');
+            if (onAudioEnded) onAudioEnded();
+          },
+          onPause: () => {
+            console.log('[TTS] Audio paused');
+            if (onAudioPause) onAudioPause();
+          }
+        });
       },
     }).then((connection) => {
       connectionRef.current = connection;
@@ -53,7 +66,7 @@ export default function useSpeechToText(options = {}) {
         }, 100);
       }
     };
-  }, [sessionId, token, onTextMessage]);
+  }, [sessionId, token, onTextMessage, onAudioPlay, onAudioEnded, onAudioPause]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -152,5 +165,6 @@ export default function useSpeechToText(options = {}) {
     error,
     startListening,
     stopListening,
+    interviewWsRef, // Expose WebSocket ref for parent components
   };
 }
