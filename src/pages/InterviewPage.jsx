@@ -5,10 +5,12 @@ import InputController from '../components/interview/InputController';
 import RoleCalibrationForm from '../components/interview/RoleCalibrationForm';
 import ThankYouScreen from '../components/interview/ThankYouScreen';
 import useInterviewLogic from '../hooks/useInterviewLogic';
+import { createTestSession } from '../lib/centrifuge';
 
 export default function InterviewPage() {
     const [showForm, setShowForm] = useState(true);
     const [candidateData, setCandidateData] = useState(null);
+    const [sessionId, setSessionId] = useState(null);
 
     const {
         currentStage,
@@ -17,12 +19,17 @@ export default function InterviewPage() {
         isThinking,
         startTime,
         isCompleted,
-        handleCandidateResponse,
         startInterviewWithData
     } = useInterviewLogic();
 
-    const handleFormSubmit = (formData) => {
+    const handleFormSubmit = async (formData) => {
         setCandidateData(formData);
+        try {
+            const session_id = await createTestSession();
+            setSessionId(session_id);
+        } catch {
+            setSessionId(crypto.randomUUID?.() ?? `session-${Date.now()}`);
+        }
         setShowForm(false);
         startInterviewWithData(formData);
     };
@@ -67,8 +74,8 @@ export default function InterviewPage() {
             />
 
             <InputController
-                onSend={handleCandidateResponse}
-                disabled={isThinking || isCompleted}
+                sessionId={sessionId}
+                disabled={isCompleted}
             />
         </div>
     );
