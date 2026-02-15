@@ -25,6 +25,8 @@ export default function InterviewPage() {
 
     // WebSocket and interview control states
     const socketRef = useRef(null);
+    const centrifugeRef = useRef(null);
+    const centrifugeConnectingRef = useRef(false); // Prevent double connection
     const [interviewState, setInterviewState] = useState('idle'); // 'idle', 'user-speaking', 'ai-thinking'
     const [isDoneSpeakingDisabled, setIsDoneSpeakingDisabled] = useState(false);
     const [isEvaluating, setIsEvaluating] = useState(false);
@@ -231,9 +233,18 @@ const handleWebSocketReady = useCallback((ws) => {
     useEffect(() => {
         if (!token || !sessionId) return;
 
+        // Prevent multiple connections
+        if (centrifugeRef.current || centrifugeConnectingRef.current) {
+            console.log('[Centrifugo] ⚠️ Connection already exists or connecting, skipping reconnection');
+            return;
+        }
+
+        centrifugeConnectingRef.current = true;
+
         try {
             const wsUrl = import.meta.env.VITE_CENTRIFUGO_WS_URL ?? 'ws://192.168.1.135:8001/connection/websocket';
             const centrifuge = new Centrifuge(wsUrl, { token });
+            centrifugeRef.current = centrifuge;
 
             const channelName = `interviews:interview:${sessionId}`;
             
@@ -272,10 +283,14 @@ const handleWebSocketReady = useCallback((ws) => {
                 console.log('[Centrifugo] Cleaning up subscription...');
                 sub.removeAllListeners();
                 sub.unsubscribe();
-                centrifuge.disconnect();
+                centrifugeConnectingRef.current = false;
             };
         } catch (err) {
             console.error('[Centrifugo] Connection failed:', err);
+            centrifugeRef.current = null;
+            centrifugeConnectingRef.current = false
+            console.error('[Centrifugo] Connection failed:', err);
+            centrifugeRef.current = null;
         }
     }, [token, sessionId]);
 

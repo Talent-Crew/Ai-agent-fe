@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { createCentrifugeConnection } from '../lib/centrifuge';
 import { connectInterviewWs } from '../lib/interviewWs';
-import { playTts } from '../lib/playTts';
 
 export default function useSpeechToText(options = {}) {
   // 1. Destructure onWebSocketReady
@@ -11,7 +9,6 @@ export default function useSpeechToText(options = {}) {
   const [isSupported, setIsSupported] = useState(false);
   const [error, setError] = useState(null);
 
-  const connectionRef = useRef(null);
   const interviewWsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
@@ -21,7 +18,7 @@ export default function useSpeechToText(options = {}) {
     onAudioPlay,
     onAudioEnded,
     onAudioPause,
-    onWebSocketReady // 2. Add to refs
+    onWebSocketReady
   });
 
   useEffect(() => {
@@ -40,54 +37,7 @@ export default function useSpeechToText(options = {}) {
     setIsSupported(!!(hasGetUserMedia && hasMediaRecorder));
   }, []);
 
-  useEffect(() => {
-    if (!sessionId || !token) return;
-
-    if (connectionRef.current?.centrifuge) {
-      console.log('[Centrifuge] ⚠️ Already connected, skipping reconnection');
-      return;
-    }
-
-    console.log('[Centrifuge] 🔌 Connecting for message receive... SessionID:', sessionId);
-
-    createCentrifugeConnection(sessionId, token, {
-      onTextMessage: (message) => {
-        console.log('[Centrifugo] 📨 Text message received:', message);
-        if (callbacksRef.current.onTextMessage) callbacksRef.current.onTextMessage(message);
-      },
-      onTtsAudio: (audioBase64) => {
-        console.log('[Centrifugo] 🔊 TTS audio received');
-        playTts(audioBase64, {
-          onPlay: () => {
-            console.log('[TTS] ▶️ Audio started playing');
-            if (callbacksRef.current.onAudioPlay) callbacksRef.current.onAudioPlay();
-          },
-          onEnded: () => {
-            console.log('[TTS] ⏹️ Audio ended');
-            if (callbacksRef.current.onAudioEnded) callbacksRef.current.onAudioEnded();
-          },
-          onPause: () => {
-            console.log('[TTS] ⏸️ Audio paused');
-            if (callbacksRef.current.onAudioPause) callbacksRef.current.onAudioPause();
-          }
-        });
-      },
-    }).then((connection) => {
-      connectionRef.current = connection;
-      console.log('[Centrifuge] ✅ CONNECTED - connection established');
-    }).catch((err) => {
-      console.error('[Centrifuge] ❌ Connection failed:', err);
-    });
-
-    return () => {
-      console.log('[Centrifuge] 🔌 Cleanup triggered - disconnecting...');
-      if (connectionRef.current?.centrifuge) {
-        connectionRef.current.centrifuge.disconnect();
-        connectionRef.current = null;
-        console.log('[Centrifuge] ❌ DISCONNECTED');
-      }
-    };
-  }, [sessionId, token]); 
+  // Removed duplicate WebSocket connection effect - connection now only happens in startListening() 
 
   useEffect(() => {
     return () => {
