@@ -47,11 +47,11 @@ export default function InterviewConfiguration() {
         setLoading(true);
 
         try {
-            // Create the interview session
+            // Create the interview session with user email
             const session = await api.createSession({
                 job_id: selectedJobId,
                 candidate_name: candidateName,
-            });
+            }, user.email); // Pass user email as second parameter
 
             // Generate the shareable link
             const baseURL = window.location.origin;

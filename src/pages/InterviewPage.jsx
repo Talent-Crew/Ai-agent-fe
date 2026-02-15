@@ -29,6 +29,7 @@ export default function InterviewPage() {
     const [isDoneSpeakingDisabled, setIsDoneSpeakingDisabled] = useState(false);
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [scorecard, setScorecard] = useState(null);
+    const [interviewEnded, setInterviewEnded] = useState(false);
 
     // Log component render for debugging
     console.log('[InterviewPage] 🔄 Component rendered, sessionId:', sessionId, 'token:', !!token);
@@ -149,9 +150,11 @@ const handleWebSocketReady = useCallback((ws) => {
         setInterviewState('ai-thinking');
         setIsDoneSpeakingDisabled(true);
 
-        // Send the signal to Django
-        socketRef.current.send(JSON.stringify({ type: "user_finished_speaking" }));
-        console.log('[Interview] ✅ Sent: user_finished_speaking');
+        // Send the signal to Django after 1 second delay
+        setTimeout(() => {
+            socketRef.current.send(JSON.stringify({ type: "user_finished_speaking" }));
+            console.log('[Interview] ✅ Sent: user_finished_speaking');
+        }, 1000);
 
         // Re-enable after delay
         setTimeout(() => setIsDoneSpeakingDisabled(false), 2000);
@@ -181,17 +184,19 @@ const handleWebSocketReady = useCallback((ws) => {
             console.log('[Interview] Current stage:', data.current_stage);
             console.log('[Interview] Full response:', data);
 
+            // Store scorecard data
+            setScorecard(data);
 
             // Wait a moment to ensure backend processing is complete
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // Redirect to results page with scorecard data
-            navigate('/results', { state: { scorecard: data } });
+            // Show thank you screen
+            setInterviewEnded(true);
         } catch (err) {
             console.error("[Interview] ❌ Failed to end interview:", err);
             console.error("[Interview] Error details:", err.message);
-            // Still redirect even if there's an error
-            setTimeout(() => navigate('/'), 1000);
+            // Still show thank you screen even if there's an error
+            setInterviewEnded(true);
         } finally {
             setIsEvaluating(false);
         }
@@ -311,6 +316,14 @@ const handleWebSocketReady = useCallback((ws) => {
     }
 
     if (isCompleted) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col">
+                <ThankYouScreen candidateName={candidateData?.name} />
+            </div>
+        );
+    }
+
+    if (interviewEnded) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col">
                 <ThankYouScreen candidateName={candidateData?.name} />

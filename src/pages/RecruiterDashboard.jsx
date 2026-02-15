@@ -4,210 +4,72 @@ import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import InterviewConfiguration from './InterviewConfiguration';
 import ScorecardView from '../components/ScorecardView';
-
-// Dummy data for demonstration
-const dummyInterviews = [
-    {
-        id: 'demo-1',
-        name: 'Sarah Mitchell',
-        email: 'sarah.mitchell@email.com',
-        role: 'Frontend',
-        experience: '5 years',
-        keySkills: 'React, TypeScript, Tailwind CSS',
-        completedAt: '2026-02-13T14:30:00.000Z',
-        verdict: 'Hire',
-        scores: { technical: 9, communication: 8, overall: 9 },
-        strengths: [
-            {
-                title: 'Strong Technical Foundation',
-                description: 'Demonstrated excellent understanding of React patterns and modern frontend architecture.',
-                evidence: 'I implemented a micro-frontend architecture using Module Federation, which improved our deployment...'
-            },
-            {
-                title: 'Problem-Solving Skills',
-                description: 'Showed analytical thinking and systematic approach to debugging.',
-                evidence: 'When we had performance issues, I used React DevTools profiler to identify unnecessary re-renders...'
-            }
-        ],
-        risks: [],
-        followUpQuestions: [
-            'Can you walk us through a complex state management challenge you\'ve solved?',
-            'How do you approach accessibility in your frontend projects?'
-        ],
-        messages: [
-            { role: 'ai', content: 'Hello Sarah! Tell me about a challenging technical problem you\'ve solved recently.' },
-            { role: 'user', content: 'I implemented a micro-frontend architecture using Module Federation, which improved our deployment flexibility and allowed teams to work independently on different parts of the application.' }
-        ]
-    },
-    {
-        id: 'demo-2',
-        name: 'Michael Chen',
-        email: 'michael.chen@email.com',
-        role: 'Backend',
-        experience: '3 years',
-        keySkills: 'Node.js, PostgreSQL, AWS',
-        completedAt: '2026-02-12T10:15:00.000Z',
-        verdict: 'Requires Human Interview',
-        scores: { technical: 7, communication: 6, overall: 7 },
-        strengths: [
-            {
-                title: 'Database Optimization',
-                description: 'Shows good understanding of database performance tuning.',
-                evidence: 'I optimized several slow queries by adding proper indexes and restructuring the joins...'
-            }
-        ],
-        risks: [
-            {
-                title: 'Limited Detail in Responses',
-                description: 'Some answers lacked specific examples and metrics.',
-                evidence: 'I worked on improving API performance.'
-            },
-            {
-                title: 'Communication Clarity',
-                description: 'Could benefit from more structured explanations of technical concepts.',
-                evidence: null
-            }
-        ],
-        followUpQuestions: [
-            'Can you provide specific metrics on the performance improvements you achieved?',
-            'How do you handle API versioning and breaking changes?',
-            'Tell us about your experience with microservices architecture.'
-        ],
-        messages: [
-            { role: 'ai', content: 'Hello Michael! Tell me about your experience with API design.' },
-            { role: 'user', content: 'I worked on improving API performance.' }
-        ]
-    },
-    {
-        id: 'demo-3',
-        name: 'Emily Rodriguez',
-        email: 'emily.rodriguez@email.com',
-        role: 'Cloud Services',
-        experience: '7 years',
-        keySkills: 'AWS, Kubernetes, Terraform',
-        completedAt: '2026-02-11T16:45:00.000Z',
-        verdict: 'Hire',
-        scores: { technical: 10, communication: 9, overall: 10 },
-        strengths: [
-            {
-                title: 'Cloud Architecture Expertise',
-                description: 'Exceptional knowledge of cloud infrastructure and best practices.',
-                evidence: 'I designed a multi-region AWS architecture with automatic failover that achieved 99.99% uptime...'
-            },
-            {
-                title: 'Cost Optimization',
-                description: 'Proven track record of reducing cloud costs while improving performance.',
-                evidence: 'By implementing spot instances and right-sizing our EC2 fleet, I reduced our monthly AWS bill by 40%...'
-            },
-            {
-                title: 'Excellent Communication',
-                description: 'Clearly explains complex technical concepts and trade-offs.',
-                evidence: null
-            }
-        ],
-        risks: [],
-        followUpQuestions: [
-            'Can you describe your experience with disaster recovery planning?',
-            'How do you approach cloud security and compliance?'
-        ],
-        messages: [
-            { role: 'ai', content: 'Hello Emily! Tell me about your cloud infrastructure experience.' },
-            { role: 'user', content: 'I designed a multi-region AWS architecture with automatic failover that achieved 99.99% uptime. The system uses Route53 for DNS failover, RDS with cross-region replication, and S3 for static assets with CloudFront distribution.' }
-        ]
-    },
-    {
-        id: 'demo-4',
-        name: 'David Kim',
-        email: 'david.kim@email.com',
-        role: 'DBMS',
-        experience: '2 years',
-        keySkills: 'MySQL, MongoDB, Redis',
-        completedAt: '2026-02-10T09:20:00.000Z',
-        verdict: 'No Hire',
-        scores: { technical: 4, communication: 5, overall: 5 },
-        strengths: [],
-        risks: [
-            {
-                title: 'Limited Technical Depth',
-                description: 'Responses showed basic understanding but lacked advanced knowledge.',
-                evidence: 'I use indexes to make queries faster.'
-            },
-            {
-                title: 'Insufficient Detail',
-                description: 'Most answers were brief without specific examples or metrics.',
-                evidence: null
-            },
-            {
-                title: 'Lack of Best Practices',
-                description: 'Did not mention industry standard approaches or methodologies.',
-                evidence: null
-            }
-        ],
-        followUpQuestions: [
-            'The candidate may need additional training in database design principles.',
-            'Consider junior-level positions or mentorship programs.'
-        ],
-        messages: [
-            { role: 'ai', content: 'Hello David! Tell me about your experience with database optimization.' },
-            { role: 'user', content: 'I use indexes to make queries faster.' }
-        ]
-    },
-    {
-        id: 'demo-5',
-        name: 'Jessica Parker',
-        email: 'jessica.parker@email.com',
-        role: 'Frontend',
-        experience: '4 years',
-        keySkills: 'Vue.js, JavaScript, CSS',
-        completedAt: '2026-02-09T13:00:00.000Z',
-        verdict: 'Requires Human Interview',
-        scores: { technical: 7, communication: 7, overall: 7 },
-        strengths: [
-            {
-                title: 'UI/UX Focus',
-                description: 'Strong attention to user experience and design implementation.',
-                evidence: 'I collaborated closely with designers to ensure pixel-perfect implementation and smooth animations...'
-            }
-        ],
-        risks: [
-            {
-                title: 'Framework-Specific Experience',
-                description: 'Primary experience with Vue.js, team uses React primarily.',
-                evidence: 'I\'ve mostly worked with Vue.js but I\'m open to learning React.'
-            }
-        ],
-        followUpQuestions: [
-            'How quickly can you transition from Vue.js to React?',
-            'Do you have any React projects in your portfolio?',
-            'What\'s your experience with TypeScript?'
-        ],
-        messages: [
-            { role: 'ai', content: 'Hello Jessica! Tell me about your frontend development experience.' },
-            { role: 'user', content: 'I\'ve worked extensively with Vue.js, building responsive SPAs with Vuex for state management.' }
-        ]
-    }
-];
+import { api } from '../lib/api';
 
 export default function RecruiterDashboard() {
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const [candidates, setCandidates] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
     const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'scorecard', 'configure'
     const [selectedCandidate, setSelectedCandidate] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
-        // Load candidates from localStorage
-        const stored = localStorage.getItem('interviewResults');
-        if (stored) {
-            const realInterviews = JSON.parse(stored);
-            // Combine real interviews with dummy data
-            setCandidates([...dummyInterviews, ...realInterviews]);
-        } else {
-            // Use only dummy data if no real interviews
-            setCandidates(dummyInterviews);
-        }
-    }, []);
+        const loadInterviewResults = async () => {
+            if (!user?.email) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await api.getInterviewResults(user.email);
+                
+                // Map API response to dashboard format
+                const mappedResults = response.results.map(result => ({
+                    id: result.session_id,
+                    session_id: result.session_id,
+                    name: result.candidate,
+                    email: result.candidate_email || '',
+                    role: result.job_title,
+                    experience: 'Not specified',
+                    keySkills: '',
+                    completedAt: result.started_at,
+                    verdict: result.result_summary === 'HIRE' ? 'Hire' : result.result_summary === 'REJECT' ? 'No Hire' : 'Requires Human Interview',
+                    scores: { 
+                        technical: result.overall_score, 
+                        communication: result.overall_score, 
+                        overall: result.overall_score 
+                    },
+                    strengths: [],
+                    risks: result.top_weaknesses.map(weakness => ({
+                        title: weakness,
+                        description: '',
+                        evidence: null
+                    })),
+                    followUpQuestions: [],
+                    messages: [],
+                    timeline: result.timeline,
+                    overall_score: result.overall_score,
+                    top_weaknesses: result.top_weaknesses,
+                    pdf_url: result.pdf_url
+                }));
+
+                setCandidates(mappedResults);
+            } catch (err) {
+                console.error('Failed to load interview results:', err);
+                setError(err.message || 'Failed to load interview results');
+                setCandidates([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadInterviewResults();
+    }, [user]);
 
     const filteredCandidates = candidates.filter(candidate => {
         const matchesSearch = candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -220,6 +82,30 @@ export default function RecruiterDashboard() {
         if (verdict === 'Hire') return 'text-green-400 bg-green-900/20 border-green-700';
         if (verdict === 'No Hire') return 'text-red-400 bg-red-900/20 border-red-700';
         return 'text-yellow-400 bg-yellow-900/20 border-yellow-700';
+    };
+
+    const handleDownloadPDF = async (candidate) => {
+        if (!candidate.session_id) {
+            alert('Session ID not found');
+            return;
+        }
+
+        try {
+            const pdfBlob = await api.downloadPDF(candidate.session_id);
+
+            // Create a blob URL and trigger download
+            const blobUrl = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `Interview_Scorecard_${candidate.name.replace(/\s+/g, '_')}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('PDF download failed:', error);
+            alert('Failed to download PDF: ' + error.message);
+        }
     };
 
     return (
@@ -345,6 +231,29 @@ export default function RecruiterDashboard() {
 
                 {currentView === 'dashboard' && (
                     <div className="p-8">
+                        {loading ? (
+                            <div className="flex items-center justify-center h-96">
+                                <div className="text-center">
+                                    <svg className="w-12 h-12 text-[#6366F1] animate-spin mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <p className="text-gray-400 text-lg">Loading interview results...</p>
+                                </div>
+                            </div>
+                        ) : error ? (
+                            <div className="bg-red-900/20 border border-red-700 rounded-xl p-6 mb-6">
+                                <div className="flex items-center space-x-4">
+                                    <svg className="w-8 h-8 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <div>
+                                        <h3 className="text-red-400 font-semibold">Error Loading Results</h3>
+                                        <p className="text-red-300 text-sm">{error}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : null}
+
                         {/* Stats Overview */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                             <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">

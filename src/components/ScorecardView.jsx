@@ -1,3 +1,5 @@
+import { api } from '../lib/api';
+
 export default function ScorecardView({ candidate, onBack }) {
     if (!candidate) return null;
 
@@ -5,6 +7,30 @@ export default function ScorecardView({ candidate, onBack }) {
         if (verdict === 'Hire') return 'text-green-400 bg-green-900/20 border-green-700';
         if (verdict === 'No Hire') return 'text-red-400 bg-red-900/20 border-red-700';
         return 'text-yellow-400 bg-yellow-900/20 border-yellow-700';
+    };
+
+    const handleDownloadPDF = async () => {
+        if (!candidate.session_id) {
+            alert('Session ID not found');
+            return;
+        }
+
+        try {
+            const pdfBlob = await api.downloadPDF(candidate.session_id);
+
+            // Create a blob URL and trigger download
+            const blobUrl = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `Interview_Scorecard_${candidate.name.replace(/\s+/g, '_')}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('PDF download failed:', error);
+            alert('Failed to download PDF: ' + error.message);
+        }
     };
 
     return (
@@ -42,8 +68,19 @@ export default function ScorecardView({ candidate, onBack }) {
                         <h2 className="text-xl font-semibold text-white mb-2">AI Verdict</h2>
                         <p className="text-gray-400">Recommendation based on interview analysis</p>
                     </div>
-                    <div className={`px-6 py-3 rounded-xl border-2 font-bold text-lg ${getVerdictColor(candidate.verdict)}`}>
-                        {candidate.verdict}
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={handleDownloadPDF}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download PDF
+                        </button>
+                        <div className={`px-6 py-3 rounded-xl border-2 font-bold text-lg ${getVerdictColor(candidate.verdict)}`}>
+                            {candidate.verdict}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -53,10 +90,9 @@ export default function ScorecardView({ candidate, onBack }) {
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                     <h3 className="text-gray-400 text-sm mb-2">Technical Score</h3>
                     <div className="flex items-end gap-2">
-                        <span className="text-4xl font-bold text-blue-400">{candidate.scores.technical}</span>
-                        <span className="text-gray-500 text-xl mb-1">/10</span>
+                        <span className="text-4xl font-bold text-blue-400">{(candidate.scores.technical / 2).toFixed(1)}</span>
                     </div>
-                    <div className="mt-3 bg-gray-700 rounded-full h-2">
+                    <div className="mt-3 bg-gray-700 rounded-full h-2 overflow-hidden">
                         <div
                             className="bg-blue-500 h-2 rounded-full transition-all"
                             style={{ width: `${(candidate.scores.technical / 10) * 100}%` }}
@@ -67,10 +103,9 @@ export default function ScorecardView({ candidate, onBack }) {
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                     <h3 className="text-gray-400 text-sm mb-2">Communication Score</h3>
                     <div className="flex items-end gap-2">
-                        <span className="text-4xl font-bold text-purple-400">{candidate.scores.communication}</span>
-                        <span className="text-gray-500 text-xl mb-1">/10</span>
+                        <span className="text-4xl font-bold text-purple-400">{(candidate.scores.communication / 2).toFixed(1)}</span>
                     </div>
-                    <div className="mt-3 bg-gray-700 rounded-full h-2">
+                    <div className="mt-3 bg-gray-700 rounded-full h-2 overflow-hidden">
                         <div
                             className="bg-purple-500 h-2 rounded-full transition-all"
                             style={{ width: `${(candidate.scores.communication / 10) * 100}%` }}
@@ -81,10 +116,9 @@ export default function ScorecardView({ candidate, onBack }) {
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6">
                     <h3 className="text-gray-400 text-sm mb-2">Overall Score</h3>
                     <div className="flex items-end gap-2">
-                        <span className="text-4xl font-bold text-[#6366F1]">{candidate.scores.overall}</span>
-                        <span className="text-gray-500 text-xl mb-1">/10</span>
+                        <span className="text-4xl font-bold text-[#6366F1]">{(candidate.scores.overall).toFixed(1)}</span>
                     </div>
-                    <div className="mt-3 bg-gray-700 rounded-full h-2">
+                    <div className="mt-3 bg-gray-700 rounded-full h-2 overflow-hidden">
                         <div
                             className="bg-[#6366F1] h-2 rounded-full transition-all"
                             style={{ width: `${(candidate.scores.overall / 10) * 100}%` }}
@@ -118,31 +152,6 @@ export default function ScorecardView({ candidate, onBack }) {
                 </div>
             )}
 
-            {/* Risks */}
-            {candidate.risks && candidate.risks.length > 0 && (
-                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 mb-6">
-                    <div className="flex items-center mb-4">
-                        <svg className="w-6 h-6 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <h2 className="text-xl font-semibold text-white">Areas of Concern</h2>
-                    </div>
-                    <div className="space-y-4">
-                        {candidate.risks.map((risk, index) => (
-                            <div key={index} className="bg-gray-900/30 rounded-lg p-4">
-                                <h3 className="text-yellow-400 font-semibold mb-2">{risk.title}</h3>
-                                <p className="text-gray-300 mb-2">{risk.description}</p>
-                                {risk.evidence && (
-                                    <div className="bg-gray-900/50 border-l-4 border-yellow-500/50 pl-4 py-2 mt-3">
-                                        <p className="text-gray-400 text-sm italic">"{risk.evidence}"</p>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {/* Follow-up Questions */}
             {candidate.followUpQuestions && candidate.followUpQuestions.length > 0 && (
                 <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 mb-6">
@@ -160,6 +169,32 @@ export default function ScorecardView({ candidate, onBack }) {
                             </li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {/* Interview Q&A */}
+            {candidate.timeline && candidate.timeline.length > 0 && (
+                <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 mb-6">
+                    <h2 className="text-xl font-semibold text-white mb-4">Interview Q&A</h2>
+                    <div className="space-y-6">
+                        {candidate.timeline.map((item, index) => (
+                            <div key={index} className="border-l-4 border-[#6366F1] pl-4">
+                                <div className="mb-3">
+                                    <p className="text-sm text-gray-500 mb-1">Question {index + 1}</p>
+                                    <p className="text-gray-200 font-medium">{item.question || 'Question not available'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-1">Answer</p>
+                                    <p className="text-gray-300">{item.answer || item.candidate_answer || 'No answer provided'}</p>
+                                </div>
+                                {item.score && (
+                                    <div className="mt-2 pt-2 border-t border-gray-700">
+                                        <p className="text-sm text-gray-400">Score: <span className="text-[#6366F1] font-medium">{item.score}</span></p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

@@ -246,6 +246,20 @@ export const api = {
             throw error;
         }
     },
+
+    /**
+     * Fetch interview results for a recruiter
+     * @param {string} email - Recruiter email
+     * @returns {Promise<object>} - Results containing array of interview sessions
+     */
+    getInterviewResults: async (email) => {
+        return await fetchWithErrorHandling(
+            `${API_BASE_URL}/interviews/api/results/?email=${encodeURIComponent(email)}`,
+            {
+                credentials: 'include',
+            }
+        );
+    },
 };
 
 /**
