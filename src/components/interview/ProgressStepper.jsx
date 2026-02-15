@@ -34,7 +34,6 @@ export default function ProgressStepper({ stages, currentStage }) {
                                     }`}
                             />
                         )}
-                        )}
                     </div>
                 );
             })}

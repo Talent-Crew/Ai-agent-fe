@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import InterviewHeader from '../components/interview/InterviewHeader';
 import ProgressStepper from '../components/interview/ProgressStepper';
 import Timer from '../components/interview/Timer';
@@ -9,15 +9,25 @@ import RoleCalibrationForm from '../components/interview/RoleCalibrationForm';
 import ThankYouScreen from '../components/interview/ThankYouScreen';
 import useInterviewLogic from '../hooks/useInterviewLogic';
 import { createTestSession } from '../lib/centrifuge';
+import { api, API_BASE_URL } from '../lib/api';
 
 export default function InterviewPage() {
     const navigate = useNavigate();
+    const { sessionId: urlSessionId } = useParams();
     const [showForm, setShowForm] = useState(true);
     const [candidateData, setCandidateData] = useState(null);
     const [sessionId, setSessionId] = useState(null);
-    const [tabSwitchCount, setTabSwitchCount] = useState(0);
-    const [showTerminationWarning, setShowTerminationWarning] = useState(false);
-    const [isTerminated, setIsTerminated] = useState(false);
+    const [token, setToken] = useState(null);
+    const [sessionData, setSessionData] = useState(null);
+    const [loading, setLoading] = useState(!!urlSessionId);
+    const [error, setError] = useState(null);
+
+    // WebSocket and interview control states
+    const socketRef = useRef(null);
+    const [interviewState, setInterviewState] = useState('idle'); // 'idle', 'user-speaking', 'ai-thinking'
+    const [isDoneSpeakingDisabled, setIsDoneSpeakingDisabled] = useState(false);
+    const [isEvaluating, setIsEvaluating] = useState(false);
+    const [scorecard, setScorecard] = useState(null);
 
     const {
         currentStage,
@@ -26,108 +36,192 @@ export default function InterviewPage() {
         isThinking,
         startTime,
         isCompleted,
-        startInterviewWithData
+        startInterviewWithData,
+        handleAIMessage
     } = useInterviewLogic();
+
+    // 5-minute auto-end timer
+    useEffect(() => {
+        if (!sessionId || showForm) return;
+
+        console.log('[Interview] Starting 5-minute timer');
+        const timer = setTimeout(() => {
+            console.log('[Interview] ⏰ Time expired - auto-ending interview');
+            endInterview();
+        }, 5 * 60 * 1000); // 5 minutes
+
+        return () => {
+            console.log('[Interview] Clearing timer');
+            clearTimeout(timer);
+        };
+    }, [sessionId, showForm]);
+
+    // Load session if sessionId is in URL
+    useEffect(() => {
+        const loadSession = async () => {
+            if (!urlSessionId) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const data = await api.getSessionConnection(urlSessionId);
+                setSessionData(data);
+                setSessionId(urlSessionId);
+                setToken(data.token);
+
+                // Set candidate data from session
+                setCandidateData({
+                    name: data.candidate_name,
+                    role: data.job_title
+                });
+
+                console.log('Session loaded:', data);
+                // Now you have:
+                // - data.token (Centrifugo token)
+                // - data.channel (WebSocket channel)
+                // - data.ws_url (WebSocket URL)
+                // - data.candidate_name
+                // - data.job_title
+
+                // Skip the form and start interview directly
+                setShowForm(false);
+                startInterviewWithData({
+                    name: data.candidate_name,
+                    role: data.job_title
+                });
+
+            } catch (err) {
+                console.error('Error loading session:', err);
+                setError('Invalid or expired interview link');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadSession();
+    }, [urlSessionId]);
 
     const handleFormSubmit = async (formData) => {
         setCandidateData(formData);
         try {
-            const session_id = await createTestSession();
+            const { session_id, token: sessionToken } = await createTestSession();
+            console.log('[Interview] Session created (backend)', session_id);
             setSessionId(session_id);
-        } catch {
-            setSessionId(crypto.randomUUID?.() ?? `session-${Date.now()}`);
+            setToken(sessionToken);
+        } catch (err) {
+            const fallback = crypto.randomUUID?.() ?? `session-${Date.now()}`;
+            console.warn('[Interview] Session create failed, using fallback id', fallback, err);
+            setSessionId(fallback);
+            setToken(null);
         }
         setShowForm(false);
         startInterviewWithData(formData);
     };
 
-    // Tab switch detection and prevention
-    useEffect(() => {
-        if (!showForm && !isCompleted) {
-            const handleVisibilityChange = () => {
-                if (document.hidden) {
-                    // User switched tab or minimized window
-                    setTabSwitchCount(prev => prev + 1);
-                    setShowTerminationWarning(true);
+    const handleWebSocketReady = (wsRef) => {
+        console.log('[Interview] WebSocket ref received from InputController');
+        socketRef.current = wsRef.current;
+    };
 
-                    // Terminate interview immediately
-                    setTimeout(() => {
-                        setIsTerminated(true);
-                    }, 100);
+    const handleDoneSpeaking = () => {
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            // 🚀 USER IS DONE, AI IS THINKING AGAIN
+            setInterviewState('ai-thinking');
+            setIsDoneSpeakingDisabled(true);
+
+            setTimeout(() => {
+                setIsDoneSpeakingDisabled(false);
+            }, 1000);
+
+            setTimeout(() => {
+                if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+                    socketRef.current.send(JSON.stringify({ type: "user_finished_speaking" }));
+                    console.log('[Interview] ✅ Message sent');
                 }
-            };
-
-            const handleBlur = () => {
-                // Window lost focus
-                if (!document.hidden) {
-                    setTabSwitchCount(prev => prev + 1);
-                    setShowTerminationWarning(true);
-
-                    setTimeout(() => {
-                        setIsTerminated(true);
-                    }, 100);
-                }
-            };
-
-            // Prevent right click
-            const handleContextMenu = (e) => {
-                e.preventDefault();
-            };
-
-            // Detect common shortcuts for switching tabs
-            const handleKeyDown = (e) => {
-                // Prevent Cmd/Ctrl + Tab, Cmd/Ctrl + W, Cmd/Ctrl + T, etc.
-                if ((e.metaKey || e.ctrlKey) && (e.key === 'Tab' || e.key === 'w' || e.key === 't' || e.key === 'n')) {
-                    e.preventDefault();
-                    setShowTerminationWarning(true);
-                    setTimeout(() => {
-                        setIsTerminated(true);
-                    }, 100);
-                }
-            };
-
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-            window.addEventListener('blur', handleBlur);
-            document.addEventListener('contextmenu', handleContextMenu);
-            document.addEventListener('keydown', handleKeyDown);
-
-            return () => {
-                document.removeEventListener('visibilitychange', handleVisibilityChange);
-                window.removeEventListener('blur', handleBlur);
-                document.removeEventListener('contextmenu', handleContextMenu);
-                document.removeEventListener('keydown', handleKeyDown);
-            };
+            }, 100);
         }
-    }, [showForm, isCompleted]);
+    };
 
-    // Show termination screen
-    if (isTerminated) {
+    const endInterview = async () => {
+        if (socketRef.current) socketRef.current.close();
+
+        setInterviewState('idle');
+        setIsEvaluating(true);
+
+        try {
+            console.log('[Interview] Ending interview, session ID:', sessionId);
+            const response = await fetch(`${API_BASE_URL}/interviews/api/sessions/${sessionId}/end/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('[Interview] ✅ Interview ended successfully');
+            console.log('[Interview] Session completed:', data.is_completed);
+            console.log('[Interview] Overall score:', data.overall_score);
+            console.log('[Interview] Current stage:', data.current_stage);
+            console.log('[Interview] Full response:', data);
+
+
+            // Wait a moment to ensure backend processing is complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Redirect to results page with scorecard data
+            navigate('/results', { state: { scorecard: data } });
+        } catch (err) {
+            console.error("[Interview] ❌ Failed to end interview:", err);
+            console.error("[Interview] Error details:", err.message);
+            // Still redirect even if there's an error
+            setTimeout(() => navigate('/'), 1000);
+        } finally {
+            setIsEvaluating(false);
+        }
+    };
+
+    // Audio event handlers for state machine
+    const handleAudioPlay = () => {
+        console.log('[Interview] 🚀 AI STARTS SPEAKING');
+        setInterviewState('ai-speaking');
+    };
+
+    const handleAudioEnded = () => {
+        console.log('[Interview] 🚀 AI FINISHED, USER\'S TURN');
+        setInterviewState('user-speaking');
+    };
+
+    const handleAudioPause = () => {
+        console.log('[Interview] 🚀 AI PAUSED, USER\'S TURN');
+        setInterviewState('user-speaking');
+    };
+
+    if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-6">
-                <div className="max-w-2xl w-full bg-gray-800/50 backdrop-blur-sm border border-red-500/50 rounded-2xl p-8 text-center">
-                    <div className="flex items-center justify-center w-24 h-24 bg-red-500/20 rounded-full mx-auto mb-6">
-                        <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h2 className="text-3xl font-bold text-red-500 mb-4">Interview Terminated</h2>
-                    <p className="text-gray-300 text-lg mb-6">
-                        Your interview has been terminated due to switching tabs or losing window focus.
-                    </p>
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 mb-6">
-                        <p className="text-sm text-gray-400">
-                            <strong className="text-white">Tab Switches Detected:</strong> {tabSwitchCount}
-                        </p>
-                        <p className="text-sm text-gray-400 mt-2">
-                            You were warned that any interruption would result in immediate termination.
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => navigate('/')}
-                        className="bg-[#6366F1] hover:bg-[#4F46E5] text-white px-8 py-3 rounded-lg font-semibold transition-colors"
-                    >
-                        Return to Home
-                    </button>
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+                <div className="text-center">
+                    <svg className="w-12 h-12 text-[#6366F1] animate-spin mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <p className="text-white text-lg">Loading interview...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+                <div className="text-center max-w-md mx-auto px-6">
+                    <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 className="text-2xl font-bold text-white mb-2">Interview Link Error</h2>
+                    <p className="text-gray-400 mb-6">{error}</p>
+                    <p className="text-gray-500 text-sm">Please contact the recruiter for a new interview link.</p>
                 </div>
             </div>
         );
@@ -151,7 +245,6 @@ export default function InterviewPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col">
-            {/* Header with Progress and Timer */}
             <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-between mb-4">
@@ -170,13 +263,99 @@ export default function InterviewPage() {
                 </div>
             </div>
 
-            <ChatContainer
-                messages={messages}
-                isThinking={isThinking}
-            />
+            {/* AI Animation Orb */}
+            <div className="flex-1 flex items-center justify-center p-8">
+                <div className="relative">
+                    {/* Status Text */}
+                    <h3 className="text-center text-2xl font-semibold text-white mb-8">
+                        {interviewState === 'idle' && "Starting interview..."}
+                        {interviewState === 'ai-thinking' && "🧠 AI is processing..."}
+                        {interviewState === 'ai-speaking' && "🤖 AI is speaking..."}
+                        {interviewState === 'user-speaking' && "🎤 Your turn to speak"}
+                    </h3>
+
+                    {/* Animated Orb */}
+                    <div className="relative w-48 h-48 mx-auto">
+                        {/* Outer glow */}
+                        <div
+                            className="absolute inset-0 rounded-full transition-all duration-500"
+                            style={{
+                                background: interviewState === 'ai-thinking' ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' :
+                                    interviewState === 'ai-speaking' ? 'linear-gradient(135deg, #a855f7, #ec4899)' :
+                                        interviewState === 'user-speaking' ? 'linear-gradient(135deg, #10b981, #3b82f6)' :
+                                            'linear-gradient(135deg, #475569, #334155)',
+                                filter: 'blur(40px)',
+                                opacity: interviewState === 'idle' ? 0.2 : 0.6,
+                                transform: interviewState === 'ai-speaking' ? 'scale(1.2)' : 'scale(0.8)'
+                            }}
+                        />
+
+                        {/* Inner orb */}
+                        <div
+                            className="absolute inset-0 m-auto w-32 h-32 rounded-full animate-pulse transition-all duration-500"
+                            style={{
+                                background: interviewState === 'ai-thinking' ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' :
+                                    interviewState === 'ai-speaking' ? 'linear-gradient(135deg, #a855f7, #ec4899)' :
+                                        interviewState === 'user-speaking' ? 'linear-gradient(135deg, #10b981, #3b82f6)' :
+                                            'linear-gradient(135deg, #475569, #334155)',
+                                boxShadow: 'inset 0 0 20px rgba(255,255,255,0.4), 0 0 20px rgba(255,255,255,0.2)',
+                                transform: interviewState === 'ai-speaking' ? 'scale(1.2)' : 'scale(1)'
+                            }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Interview Control Buttons */}
+            <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
+                <div className="max-w-7xl mx-auto px-6 py-4">
+                    <div className="flex items-center justify-center space-x-4">
+                        {/* Finished Speaking Button */}
+                        <button
+                            onClick={handleDoneSpeaking}
+                            disabled={isDoneSpeakingDisabled || isCompleted || isEvaluating}
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Finished Speaking</span>
+                        </button>
+
+                        {/* End Interview Button */}
+                        <button
+                            onClick={endInterview}
+                            disabled={isCompleted || isEvaluating}
+                            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                        >
+                            {isEvaluating ? (
+                                <>
+                                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <span>Generating Scorecard...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span>End Interview</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <InputController
                 sessionId={sessionId}
+                token={token}
+                onTextMessage={handleAIMessage}
+                onWebSocketReady={handleWebSocketReady}
+                onAudioPlay={handleAudioPlay}
+                onAudioEnded={handleAudioEnded}
+                onAudioPause={handleAudioPause}
                 disabled={isCompleted}
             />
         </div>
