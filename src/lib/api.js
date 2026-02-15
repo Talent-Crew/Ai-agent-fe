@@ -13,16 +13,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.1.135:8000';
 
 /**
- * Get CSRF token from cookies for Django
- * @returns {string|undefined} - CSRF token value
- */
-const getCSRFToken = () => {
-    return document.cookie.split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-};
-
-/**
  * Generic fetch wrapper with error handling
  * @param {string} url - The endpoint URL
  * @param {object} options - Fetch options (method, headers, body, etc.)
@@ -75,25 +65,32 @@ export const api = {
      * @param {string} jobData.department - Department name
      * @param {string} jobData.location - Job location
      * @param {array} jobData.required_skills - Array of required skills
+     * @param {string} userEmail - Email of the user creating the job
      * @returns {Promise<object>} - Created job with UUID
      */
-    createJob: async (jobData) => {
+    createJob: async (jobData, userEmail) => {
         return await fetchWithErrorHandling(`${API_BASE_URL}/interviews/api/jobs/`, {
             method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken(),
-            },
-            body: JSON.stringify(jobData),
+            body: JSON.stringify({
+                ...jobData,
+                user_email: userEmail  // Explicitly send who is creating this
+            }),
             credentials: 'include',
         });
     },
 
     /**
      * Get all job postings
+     * @param {string} userEmail - Email of the user fetching jobs
      * @returns {Promise<array>} - Array of job objects
      */
-    getJobs: async () => {
-        return await fetchWithErrorHandling(`${API_BASE_URL}/interviews/api/jobs/`, {
+    getJobs: async (userEmail) => {
+        // Build the URL with the email parameter
+        const url = userEmail 
+            ? `${API_BASE_URL}/interviews/api/jobs/?email=${userEmail}`
+            : `${API_BASE_URL}/interviews/api/jobs/`;
+            
+        return await fetchWithErrorHandling(url, {
             credentials: 'include',
         });
     },
@@ -118,9 +115,6 @@ export const api = {
     updateJob: async (jobId, jobData) => {
         return await fetchWithErrorHandling(`${API_BASE_URL}/interviews/api/jobs/${jobId}/`, {
             method: 'PUT',
-            headers: {
-                'X-CSRFToken': getCSRFToken(),
-            },
             body: JSON.stringify(jobData),
             credentials: 'include',
         });
@@ -134,9 +128,6 @@ export const api = {
     deleteJob: async (jobId) => {
         return await fetchWithErrorHandling(`${API_BASE_URL}/interviews/api/jobs/${jobId}/`, {
             method: 'DELETE',
-            headers: {
-                'X-CSRFToken': getCSRFToken(),
-            },
             credentials: 'include',
         });
     },
@@ -149,16 +140,15 @@ export const api = {
      * @param {string} sessionData.candidate_email - Candidate's email (optional)
      * @returns {Promise<object>} - Created session with UUID
      */
-    createSession: async (sessionData) => {
-        return await fetchWithErrorHandling(`${API_BASE_URL}/interviews/api/sessions/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken(),
-            },
-            body: JSON.stringify(sessionData),
-            credentials: 'include',
-        });
-    },
+    createSession: async (sessionData, userEmail) => {
+    return await fetchWithErrorHandling(`${API_BASE_URL}/interviews/api/sessions/`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+            ...sessionData,
+            user_email: userEmail // <--- This matches the backend perform_create
+        }),
+    });
+},
 
     /**
      * Get all interview sessions
@@ -215,9 +205,6 @@ export const api = {
             `${API_BASE_URL}/interviews/api/sessions/${sessionId}/`,
             {
                 method: 'PATCH',
-                headers: {
-                    'X-CSRFToken': getCSRFToken(),
-                },
                 body: JSON.stringify(statusData),
                 credentials: 'include',
             }

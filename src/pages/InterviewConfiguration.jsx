@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { api } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { Languages } from 'lucide-react';
 
 export default function InterviewConfiguration() {
+    const { user } = useAuth(); // Get the logged in user
     const [saveStatus, setSaveStatus] = useState('');
     const [formData, setFormData] = useState({
         title: '',
@@ -23,18 +25,22 @@ export default function InterviewConfiguration() {
     const [generatedLink, setGeneratedLink] = useState('');
 
     useEffect(() => {
-        // Load available jobs
         const loadJobs = async () => {
-            try {
-                const jobsList = await api.getJobs();
-                setJobs(jobsList);
-            } catch (error) {
-                console.error('Error loading jobs:', error);
+            // Only fetch if we have the user's email
+            if (user?.email) {
+                try {
+                    console.log(`Fetching jobs for user: ${user.email}`);
+                    const jobsList = await api.getJobs(user.email); // <--- Pass email here
+                    console.log("Jobs received:", jobsList);
+                    setJobs(jobsList);
+                } catch (error) {
+                    console.error('Error loading jobs:', error);
+                }
             }
         };
 
         loadJobs();
-    }, []);
+    }, [user]); // Re-run if user object changes
 
     const handleGenerateLink = async (e) => {
         e.preventDefault();
@@ -80,8 +86,11 @@ export default function InterviewConfiguration() {
                 },
             };
 
-            const createdJob = await api.createJob(jobData);
+            const createdJob = await api.createJob(jobData, user.email); // Pass email manually
             console.log('Job created:', createdJob);
+
+            // Update jobs state immediately so dropdown refreshes without page reload
+            setJobs(prevJobs => [createdJob, ...prevJobs]);
 
             // Reset form
             setFormData({
