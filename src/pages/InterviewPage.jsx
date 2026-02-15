@@ -213,6 +213,15 @@ const handleWebSocketReady = useCallback((ws) => {
         setInterviewState('user-speaking');
     }, []);
 
+    const handleRespeak = useCallback(() => {
+        console.log('[Interview] 🔄 User clicked Respeak');
+        
+        // Go back to user-speaking state
+        setInterviewState('user-speaking');
+        
+        console.log('[Interview] ✅ Ready for user to respeak');
+    }, []);
+
     // Centrifugo Subscription for AI messages & audio
     useEffect(() => {
         if (!token || !sessionId) return;
@@ -376,6 +385,19 @@ const handleWebSocketReady = useCallback((ws) => {
             <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
                 <div className="max-w-7xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-center space-x-4">
+                        {/* Respeak Button - Only show when AI is thinking */}
+                        {interviewState === 'ai-thinking' && (
+                            <button
+                                onClick={handleRespeak}
+                                className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                <span>Respeak</span>
+                            </button>
+                        )}
+
                         {/* Finished Speaking Button */}
                         <button
                             onClick={handleDoneSpeaking}
