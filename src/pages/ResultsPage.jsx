@@ -1,10 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { api } from '../lib/api';
 
 export default function ResultsPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const [scorecard, setScorecard] = useState(null);
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadError, setDownloadError] = useState(null);
 
     useEffect(() => {
         if (location.state?.scorecard) {
@@ -14,6 +17,35 @@ export default function ResultsPage() {
             navigate('/');
         }
     }, [location, navigate]);
+
+    const handleDownloadPDF = async () => {
+        if (!scorecard?.id) {
+            setDownloadError('Session ID not found');
+            return;
+        }
+
+        setIsDownloading(true);
+        setDownloadError(null);
+
+        try {
+            const pdfBlob = await api.downloadPDF(scorecard.id);
+
+            // Create a blob URL and trigger download
+            const blobUrl = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `Interview_Scorecard_${scorecard.candidate?.replace(/\s+/g, '_') || 'Candidate'}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('PDF download failed:', error);
+            setDownloadError(error.message || 'Failed to download PDF');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
 
     if (!scorecard) {
         return (
@@ -178,19 +210,47 @@ export default function ResultsPage() {
                 )}
 
                 {/* Action Buttons */}
-                <div className="mt-12 flex justify-center space-x-4">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold text-lg shadow-lg transition-all transform hover:scale-105"
-                    >
-                        Back to Home
-                    </button>
-                    <button
-                        onClick={() => window.print()}
-                        className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl font-semibold text-lg shadow-lg transition-all transform hover:scale-105"
-                    >
-                        Print Results
-                    </button>
+                <div className="mt-12 flex flex-col items-center">
+                    {downloadError && (
+                        <div className="mb-4 px-6 py-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-300 text-sm">
+                            {downloadError}
+                        </div>
+                    )}
+                    <div className="flex justify-center space-x-4">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold text-lg shadow-lg transition-all transform hover:scale-105"
+                        >
+                            Back to Home
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white rounded-xl font-semibold text-lg shadow-lg transition-all transform hover:scale-105"
+                        >
+                            Print Results
+                        </button>
+                        <button
+                            onClick={handleDownloadPDF}
+                            disabled={isDownloading}
+                            className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold text-lg shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                        >
+                            {isDownloading ? (
+                                <>
+                                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <span>Downloading...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16v-4m0 0V8m0 4H8m0 0h4m4 0h-4m4 0v4m0 0v-4m0 4h4" />
+                                    </svg>
+                                    <span>Download PDF</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

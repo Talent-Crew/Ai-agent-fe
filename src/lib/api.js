@@ -210,6 +210,42 @@ export const api = {
             }
         );
     },
+
+    /**
+     * Download interview scorecard PDF
+     * @param {string} sessionId - Session UUID
+     * @returns {Promise<Blob>} - PDF file as blob
+     */
+    downloadPDF: async (sessionId) => {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/interviews/api/sessions/${sessionId}/download-pdf/`,
+                {
+                    method: 'GET',
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorData.detail || errorMessage;
+                } catch {
+                    // If parsing fails, use default error message
+                }
+                throw new Error(errorMessage);
+            }
+
+            // Return the blob for PDF
+            return await response.blob();
+        } catch (error) {
+            if (error.message === 'Failed to fetch') {
+                throw new Error(`Network error: Unable to connect to download endpoint`);
+            }
+            throw error;
+        }
+    },
 };
 
 /**
