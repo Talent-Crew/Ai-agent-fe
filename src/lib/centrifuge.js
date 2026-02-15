@@ -1,6 +1,6 @@
 import { Centrifuge } from 'centrifuge';
 
-const TOKEN_URL = import.meta.env.VITE_INTERVIEW_TOKEN_URL ?? 'http://192.168.0.53:8000/interviews/token';
+const TOKEN_URL = import.meta.env.VITE_INTERVIEW_TOKEN_URL ?? 'http://192.168.1.135:8000/interviews/token';
 const SETUP_URL = TOKEN_URL.replace(/\/token\/?$/, '') + '/test/bootstrap/';
 
 /**
@@ -23,7 +23,7 @@ export async function createTestSession() {
  * @returns {{ centrifuge: Centrifuge, subscription: Subscription }}
  */
 export async function createCentrifugeConnection(sessionId, token, { onTextMessage, onTtsAudio } = {}) {
-  const wsUrl = import.meta.env.VITE_CENTRIFUGO_WS_URL ?? 'ws://192.168.0.53:8001/connection/websocket';
+  const wsUrl = import.meta.env.VITE_CENTRIFUGO_WS_URL ?? 'ws://192.168.1.135:8001/connection/websocket';
 
   const centrifuge = new Centrifuge(wsUrl, { token });
   const sub = centrifuge.newSubscription(`interviews:interview:${sessionId}`);

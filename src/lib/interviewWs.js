@@ -2,7 +2,7 @@
  * Django WebSocket: stream audio from browser to Django for Deepgram STT.
  * Flow: Mic → MediaRecorder → this WS → Django → Deepgram STT → Gemini → Deepgram TTS → Centrifugo → React.
  */
-const TOKEN_URL = import.meta.env.VITE_INTERVIEW_TOKEN_URL ?? 'http://192.168.0.53:8000/interviews/token';
+const TOKEN_URL = import.meta.env.VITE_INTERVIEW_TOKEN_URL ?? 'http://192.168.1.135:8000/interviews/token';
 
 function getWsBase() {
   const fromEnv = import.meta.env.VITE_INTERVIEW_WS_URL;

@@ -6,8 +6,6 @@ import InterviewPage from './pages/InterviewPage';
 import ResultsPage from './pages/ResultsPage';
 import RecruiterAuth from './pages/RecruiterAuth';
 import RecruiterDashboard from './pages/RecruiterDashboard';
-import CandidateScorecard from './pages/CandidateScorecard';
-import InterviewConfiguration from './pages/InterviewConfiguration';
 
 function App() {
   return (
@@ -17,28 +15,16 @@ function App() {
         <Route path="/interview" element={<InterviewPage />} />
         <Route path="/interview/:sessionId" element={<InterviewPage />} />
         <Route path="/results" element={<ResultsPage />} />
+        
+        {/* Auth Page */}
         <Route path="/recruiter/auth" element={<RecruiterAuth />} />
+        
+        {/* Dashboard - Single definition */}
         <Route
           path="/recruiter"
           element={
             <ProtectedRoute>
               <RecruiterDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/recruiter/candidate/:id"
-          element={
-            <ProtectedRoute>
-              <CandidateScorecard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/recruiter/configure"
-          element={
-            <ProtectedRoute>
-              <InterviewConfiguration />
             </ProtectedRoute>
           }
         />

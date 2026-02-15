@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { API_BASE_URL } from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -15,91 +16,97 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check if user is already logged in (from localStorage/session)
-        const storedUser = localStorage.getItem('recruiterUser');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-        setLoading(false);
+        // Real check: Ask backend who the current user is
+        const checkAuth = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/interviews/api/auth/me/`, { credentials: 'include' });
+                if (response.ok) {
+                    const userData = await response.json();
+                    setUser(userData);
+                }
+            } catch (err) {
+                console.error("Session check failed", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        checkAuth();
     }, []);
 
     const login = async (email, password) => {
-        try {
-            // TODO: Replace with actual API call to backend
-            // const response = await fetch('/api/auth/login', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ email, password })
-            // });
-            // const data = await response.json();
+    try {
+        const response = await fetch(`${API_BASE_URL}/interviews/api/auth/login/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+            credentials: 'include'
+        });
 
-            // Temporary mock implementation
-            const mockUser = {
-                id: '1',
-                email: email,
-                name: email.split('@')[0],
-                role: 'recruiter'
-            };
+        const data = await response.json();
 
-            setUser(mockUser);
-            localStorage.setItem('recruiterUser', JSON.stringify(mockUser));
-            // TODO: Store JWT token from backend
-            // localStorage.setItem('authToken', data.token);
-
+        if (response.ok) {
+            setUser(data.user);
             return { success: true };
-        } catch (error) {
-            console.error('Login error:', error);
-            return { success: false, error: error.message };
+        } else {
+            // DRF often returns errors in different formats. 
+            // This captures 'non_field_errors', 'detail', or specific field errors.
+            const errorMsg = data.non_field_errors?.[0] || 
+                             data.detail || 
+                             (typeof data === 'object' ? Object.values(data)[0] : 'Invalid credentials');
+            
+            return { success: false, error: errorMsg };
         }
-    };
+    } catch (error) {
+        return { success: false, error: 'Server connection failed' };
+    }
+};
 
-    const signup = async (name, email, password) => {
-        try {
-            // TODO: Replace with actual API call to backend
-            // const response = await fetch('/api/auth/signup', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ name, email, password })
-            // });
-            // const data = await response.json();
+    // frontend/src/context/AuthContext.js
 
-            // Temporary mock implementation
-            const mockUser = {
-                id: Date.now().toString(),
-                email: email,
-                name: name,
-                role: 'recruiter'
-            };
+const signup = async (name, company_name, email, password) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/interviews/api/users/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: email, 
+                full_name: name, 
+                company_name: company_name, 
+                password: password 
+                // username removed! The backend handles it now.
+            }),
+            credentials: 'include'
+        });
+        const data = await response.json();
 
-            setUser(mockUser);
-            localStorage.setItem('recruiterUser', JSON.stringify(mockUser));
-            // TODO: Store JWT token from backend
-            // localStorage.setItem('authToken', data.token);
-
-            return { success: true };
-        } catch (error) {
-            console.error('Signup error:', error);
-            return { success: false, error: error.message };
+        if (response.ok) {
+            // After successful signup, log the user in to establish the session
+            return await login(email, password);
         }
-    };
 
-    const logout = () => {
+        // Return the first error message found in the response object
+        const errorMessage = typeof data === 'object' 
+            ? Object.values(data)[0] 
+            : 'Signup failed';
+            
+        return { success: false, error: errorMessage };
+    } catch (error) {
+        console.error("Signup error:", error);
+        return { success: false, error: 'Network or Server error' };
+    }
+};
+
+    const logout = async () => {
+        await fetch(`${API_BASE_URL}/interviews/api/auth/logout/`, { method: 'POST', credentials: 'include' });
         setUser(null);
-        localStorage.removeItem('recruiterUser');
-        // TODO: Clear JWT token
-        // localStorage.removeItem('authToken');
-
-        // TODO: Optional - Call backend to invalidate session
-        // fetch('/api/auth/logout', { method: 'POST' });
     };
 
     const value = {
         user,
+        loading,
         login,
         signup,
         logout,
-        isAuthenticated: !!user,
-        loading
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

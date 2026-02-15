@@ -43,45 +43,49 @@ export default function useSpeechToText(options = {}) {
   useEffect(() => {
     if (!sessionId || !token) return;
 
-    console.log('[Interview] Connecting to Centrifuge for message receive...');
+    // Guard: Don't reconnect if already connected
+    if (connectionRef.current?.centrifuge) {
+      console.log('[Centrifuge] ⚠️ Already connected, skipping reconnection');
+      return;
+    }
+
+    console.log('[Centrifuge] 🔌 Connecting for message receive... SessionID:', sessionId);
 
     createCentrifugeConnection(sessionId, token, {
       onTextMessage: (message) => {
-        console.log('[Centrifugo] Text message received:', message);
+        console.log('[Centrifugo] 📨 Text message received:', message);
         if (callbacksRef.current.onTextMessage) callbacksRef.current.onTextMessage(message);
       },
       onTtsAudio: (audioBase64) => {
-        console.log('[Centrifugo] TTS audio received');
+        console.log('[Centrifugo] 🔊 TTS audio received');
         playTts(audioBase64, {
           onPlay: () => {
-            console.log('[TTS] Audio started playing');
+            console.log('[TTS] ▶️ Audio started playing');
             if (callbacksRef.current.onAudioPlay) callbacksRef.current.onAudioPlay();
           },
           onEnded: () => {
-            console.log('[TTS] Audio ended');
+            console.log('[TTS] ⏹️ Audio ended');
             if (callbacksRef.current.onAudioEnded) callbacksRef.current.onAudioEnded();
           },
           onPause: () => {
-            console.log('[TTS] Audio paused');
+            console.log('[TTS] ⏸️ Audio paused');
             if (callbacksRef.current.onAudioPause) callbacksRef.current.onAudioPause();
           }
         });
       },
     }).then((connection) => {
       connectionRef.current = connection;
-      console.log('[Interview] Centrifuge connected for messages');
+      console.log('[Centrifuge] ✅ CONNECTED - connection established');
     }).catch((err) => {
-      console.error('[Interview] Centrifuge connection failed:', err);
+      console.error('[Centrifuge] ❌ Connection failed:', err);
     });
 
     return () => {
+      console.log('[Centrifuge] 🔌 Cleanup triggered - disconnecting...');
       if (connectionRef.current?.centrifuge) {
-        setTimeout(() => {
-          if (connectionRef.current?.centrifuge) {
-            connectionRef.current.centrifuge.disconnect();
-            connectionRef.current = null;
-          }
-        }, 100);
+        connectionRef.current.centrifuge.disconnect();
+        connectionRef.current = null;
+        console.log('[Centrifuge] ❌ DISCONNECTED');
       }
     };
   }, [sessionId, token]); // Only reconnect when sessionId or token changes

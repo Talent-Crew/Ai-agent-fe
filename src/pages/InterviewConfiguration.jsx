@@ -73,7 +73,7 @@ export default function InterviewConfiguration() {
                 title: formData.title,
                 stack: formData.stack.split(',').map(s => s.trim()),
                 rubric_template: {
-                    Languages: formData.Languages.split(',').map(s => s.trim()),
+                    languages: formData.primary_language.split(',').map(s => s.trim()),
                     experience_level: formData.experience_level,
                     core_skills: formData.core_skills.split(',').map(s => s.trim()),
                     evaluation_focus: formData.evaluation_focus.split(',').map(s => s.trim()),

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import InterviewHeader from '../components/interview/InterviewHeader';
 import ProgressStepper from '../components/interview/ProgressStepper';
@@ -28,6 +28,9 @@ export default function InterviewPage() {
     const [isDoneSpeakingDisabled, setIsDoneSpeakingDisabled] = useState(false);
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [scorecard, setScorecard] = useState(null);
+
+    // Log component render for debugging
+    console.log('[InterviewPage] 🔄 Component rendered, sessionId:', sessionId, 'token:', !!token);
 
     const {
         currentStage,
@@ -119,10 +122,10 @@ export default function InterviewPage() {
         startInterviewWithData(formData);
     };
 
-    const handleWebSocketReady = (wsRef) => {
+    const handleWebSocketReady = useCallback((wsRef) => {
         console.log('[Interview] WebSocket ref received from InputController');
         socketRef.current = wsRef.current;
-    };
+    }, []);
 
     const handleDoneSpeaking = () => {
         if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
@@ -130,14 +133,16 @@ export default function InterviewPage() {
             setInterviewState('ai-thinking');
             setIsDoneSpeakingDisabled(true);
 
+            // Re-enable button after 1 second to prevent spam
             setTimeout(() => {
                 setIsDoneSpeakingDisabled(false);
             }, 1000);
 
+            // Send message after 100ms delay (important for backend processing)
             setTimeout(() => {
                 if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
                     socketRef.current.send(JSON.stringify({ type: "user_finished_speaking" }));
-                    console.log('[Interview] ✅ Message sent');
+                    console.log('[Interview] ✅ User finished speaking message sent');
                 }
             }, 100);
         }
@@ -183,21 +188,21 @@ export default function InterviewPage() {
         }
     };
 
-    // Audio event handlers for state machine
-    const handleAudioPlay = () => {
+    // Audio event handlers for state machine (memoized to prevent re-renders)
+    const handleAudioPlay = useCallback(() => {
         console.log('[Interview] 🚀 AI STARTS SPEAKING');
         setInterviewState('ai-speaking');
-    };
+    }, []);
 
-    const handleAudioEnded = () => {
+    const handleAudioEnded = useCallback(() => {
         console.log('[Interview] 🚀 AI FINISHED, USER\'S TURN');
         setInterviewState('user-speaking');
-    };
+    }, []);
 
-    const handleAudioPause = () => {
+    const handleAudioPause = useCallback(() => {
         console.log('[Interview] 🚀 AI PAUSED, USER\'S TURN');
         setInterviewState('user-speaking');
-    };
+    }, []);
 
     if (loading) {
         return (

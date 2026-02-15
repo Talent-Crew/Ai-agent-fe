@@ -6,6 +6,7 @@ export default function RecruiterAuth() {
     const [isLogin, setIsLogin] = useState(true);
     const [formData, setFormData] = useState({
         name: '',
+        company_name: '',
         email: '',
         password: '',
         confirmPassword: ''
@@ -17,36 +18,35 @@ export default function RecruiterAuth() {
     const { login, signup } = useAuth();
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+    e.preventDefault();
+    console.log("Submit triggered!"); // <--- Debug 1
+    setError('');
+    setLoading(true);
 
-        // Validation
-        if (!isLogin && formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            setLoading(false);
-            return;
+    try {
+        let result;
+        if (isLogin) {
+            console.log("Attempting Login..."); // <--- Debug 2
+            result = await login(formData.email, formData.password);
+        } else {
+            console.log("Attempting Signup..."); // <--- Debug 3
+            result = await signup(formData.name, formData.company_name, formData.email, formData.password);
         }
 
-        try {
-            let result;
-            if (isLogin) {
-                result = await login(formData.email, formData.password);
-            } else {
-                result = await signup(formData.name, formData.email, formData.password);
-            }
+        console.log("Result received:", result); // <--- Debug 4
 
-            if (result.success) {
-                navigate('/recruiter');
-            } else {
-                setError(result.error || 'Authentication failed. Please try again.');
-            }
-        } catch (err) {
-            setError('An unexpected error occurred. Please try again.');
-        } finally {
-            setLoading(false);
+        if (result.success) {
+            navigate('/recruiter');
+        } else {
+            setError(result.error);
         }
-    };
+    } catch (err) {
+        console.error("Catch block error:", err); // <--- Debug 5
+        setError('An unexpected error occurred.');
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleChange = (e) => {
         setFormData({
@@ -112,6 +112,23 @@ export default function RecruiterAuth() {
                                     required={!isLogin}
                                     className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                                     placeholder="John Doe"
+                                />
+                            </div>
+                        )}
+
+                        {!isLogin && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Company Name
+                                </label>
+                                <input
+                                    type="text"
+                                    name="company_name"
+                                    value={formData.company_name}
+                                    onChange={handleChange}
+                                    required={!isLogin}
+                                    className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
+                                    placeholder="Your Company Name"
                                 />
                             </div>
                         )}

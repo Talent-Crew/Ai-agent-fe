@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
-import ConfigurationView from '../components/ConfigurationView';
+import InterviewConfiguration from './InterviewConfiguration';
 import ScorecardView from '../components/ScorecardView';
 
 // Dummy data for demonstration
@@ -334,7 +334,7 @@ export default function RecruiterDashboard() {
                 </header>
 
                 {/* Conditional Content Rendering */}
-                {currentView === 'configure' && <ConfigurationView />}
+                {currentView === 'configure' && <InterviewConfiguration />}
 
                 {currentView === 'scorecard' && (
                     <ScorecardView
