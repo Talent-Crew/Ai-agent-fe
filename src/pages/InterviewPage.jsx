@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Centrifuge } from 'centrifuge';
 import InterviewHeader from '../components/interview/InterviewHeader';
 import ProgressStepper from '../components/interview/ProgressStepper';
 import Timer from '../components/interview/Timer';
@@ -122,30 +123,38 @@ export default function InterviewPage() {
         startInterviewWithData(formData);
     };
 
-    const handleWebSocketReady = useCallback((wsRef) => {
-        console.log('[Interview] WebSocket ref received from InputController');
-        socketRef.current = wsRef.current;
-    }, []);
+    // Find this function inside InterviewPage.jsx and replace it
+const handleWebSocketReady = useCallback((ws) => {
+    console.log('[Interview] WebSocket instance received:', ws);
+    if (ws) {
+        socketRef.current = ws;
+        console.log('[Interview] ✅ Socket connected (direct):', socketRef.current.readyState);
+    }
+}, []);
 
     const handleDoneSpeaking = () => {
-        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-            // 🚀 USER IS DONE, AI IS THINKING AGAIN
-            setInterviewState('ai-thinking');
-            setIsDoneSpeakingDisabled(true);
-
-            // Re-enable button after 1 second to prevent spam
-            setTimeout(() => {
-                setIsDoneSpeakingDisabled(false);
-            }, 1000);
-
-            // Send message after 100ms delay (important for backend processing)
-            setTimeout(() => {
-                if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-                    socketRef.current.send(JSON.stringify({ type: "user_finished_speaking" }));
-                    console.log('[Interview] ✅ User finished speaking message sent');
-                }
-            }, 100);
+        // Check if we are actually in a state where the user should be speaking
+        if (interviewState !== 'user-speaking') {
+            console.warn('[Interview] ⚠️ Not in user-speaking state, current state:', interviewState);
+            return;
         }
+
+        if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+            console.error('[Interview] ❌ WS Disconnected. Attempting to reconnect or alert.');
+            alert('Connection lost. Please refresh.');
+            return;
+        }
+
+        // Update UI immediately to prevent double clicks
+        setInterviewState('ai-thinking');
+        setIsDoneSpeakingDisabled(true);
+
+        // Send the signal to Django
+        socketRef.current.send(JSON.stringify({ type: "user_finished_speaking" }));
+        console.log('[Interview] ✅ Sent: user_finished_speaking');
+
+        // Re-enable after delay
+        setTimeout(() => setIsDoneSpeakingDisabled(false), 2000);
     };
 
     const endInterview = async () => {
@@ -203,6 +212,58 @@ export default function InterviewPage() {
         console.log('[Interview] 🚀 AI PAUSED, USER\'S TURN');
         setInterviewState('user-speaking');
     }, []);
+
+    // Centrifugo Subscription for AI messages & audio
+    useEffect(() => {
+        if (!token || !sessionId) return;
+
+        try {
+            const wsUrl = import.meta.env.VITE_CENTRIFUGO_WS_URL ?? 'ws://192.168.1.135:8001/connection/websocket';
+            const centrifuge = new Centrifuge(wsUrl, { token });
+
+            const channelName = `interviews:interview:${sessionId}`;
+            
+            // Modern Centrifugo syntax: use newSubscription()
+            const sub = centrifuge.newSubscription(channelName);
+
+            sub.on('publication', (ctx) => {
+                const data = ctx.data;
+                console.log('[Centrifugo] 📨 Received:', data);
+
+                // Matches Python: {"type": "text_message", "message": message...}
+                if (data.type === 'text_message') {
+                    console.log('[Centrifugo] 💬 Message:', data.message);
+                    handleAIMessage(data.message);
+                }
+
+                // Matches Python: {"type": "tts_audio_complete", "audio": b64...}
+                if (data.type === 'tts_audio_complete' || data.type === 'tts_audio') {
+                    console.log('[Centrifugo] 🔊 Playing audio');
+                    const audio = new Audio(`data:audio/mp3;base64,${data.audio}`);
+                    audio.onplay = handleAudioPlay;
+                    audio.onended = handleAudioEnded;
+                    audio.play().catch(e => console.error("[Centrifugo] Audio playback failed", e));
+                }
+
+                if (data.type === 'interview_complete') {
+                    console.log('[Centrifugo] 🏁 Interview finished by AI');
+                    endInterview();
+                }
+            });
+
+            sub.subscribe(); // Actually triggers the subscription
+            centrifuge.connect();
+
+            return () => {
+                console.log('[Centrifugo] Cleaning up subscription...');
+                sub.removeAllListeners();
+                sub.unsubscribe();
+                centrifuge.disconnect();
+            };
+        } catch (err) {
+            console.error('[Centrifugo] Connection failed:', err);
+        }
+    }, [token, sessionId]);
 
     if (loading) {
         return (

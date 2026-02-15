@@ -22,17 +22,26 @@ export function connectInterviewWs(sessionId) {
   const ws = new WebSocket(url);
 
   return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      console.warn('[Interview WS] Connection timeout');
+      ws.close();
+      reject(new Error('WebSocket connection timeout'));
+    }, 10000); // 10 second timeout
+
     ws.onopen = () => {
+      clearTimeout(timeout);
       console.log('[Interview WS] connected', url);
       resolve(ws);
     };
 
     ws.onerror = (e) => {
+      clearTimeout(timeout);
       console.warn('[Interview WS] error', e);
       reject(new Error('WebSocket connection failed'));
     };
 
     ws.onclose = () => {
+      clearTimeout(timeout);
       console.log('[Interview WS] closed');
     };
   });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const INTERVIEW_STAGES = ['Adaptive Technical Deep-Dive', 'Communication Assessment', 'Wrap-up'];
 
@@ -11,16 +11,16 @@ export default function useInterviewLogic() {
     const [candidateInfo, setCandidateInfo] = useState(null);
     const [isCompleted, setIsCompleted] = useState(false);
 
-    const startInterviewWithData = (formData) => {
+    const startInterviewWithData = useCallback((formData) => {
         setSelectedRole(formData.role);
         setCandidateInfo(formData);
-    };
+    }, []);
 
-    const handleAIMessage = (message) => {
+    const handleAIMessage = useCallback((message) => {
         console.log('[Interview Logic] AI message received:', message);
         setMessages(prev => [...prev, { role: 'ai', content: message }]);
         setIsThinking(false);
-    };
+    }, []);
 
     const saveInterviewResults = (finalMessages, candidateData) => {
         // Generate scorecard data

@@ -4,7 +4,8 @@ import { connectInterviewWs } from '../lib/interviewWs';
 import { playTts } from '../lib/playTts';
 
 export default function useSpeechToText(options = {}) {
-  const { sessionId, token, onTextMessage, onAudioPlay, onAudioEnded, onAudioPause } = options;
+  // 1. Destructure onWebSocketReady
+  const { sessionId, token, onTextMessage, onAudioPlay, onAudioEnded, onAudioPause, onWebSocketReady } = options;
 
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
@@ -15,23 +16,23 @@ export default function useSpeechToText(options = {}) {
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
   
-  // Store callbacks in refs to avoid recreating Centrifuge connection
   const callbacksRef = useRef({
     onTextMessage,
     onAudioPlay,
     onAudioEnded,
-    onAudioPause
+    onAudioPause,
+    onWebSocketReady // 2. Add to refs
   });
 
-  // Update callbacks ref when they change
   useEffect(() => {
     callbacksRef.current = {
       onTextMessage,
       onAudioPlay,
       onAudioEnded,
-      onAudioPause
+      onAudioPause,
+      onWebSocketReady // 3. Keep updated
     };
-  }, [onTextMessage, onAudioPlay, onAudioEnded, onAudioPause]);
+  }, [onTextMessage, onAudioPlay, onAudioEnded, onAudioPause, onWebSocketReady]);
 
   useEffect(() => {
     const hasGetUserMedia = typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia != null;
@@ -39,11 +40,9 @@ export default function useSpeechToText(options = {}) {
     setIsSupported(!!(hasGetUserMedia && hasMediaRecorder));
   }, []);
 
-  // Connect to Centrifuge immediately to receive messages
   useEffect(() => {
     if (!sessionId || !token) return;
 
-    // Guard: Don't reconnect if already connected
     if (connectionRef.current?.centrifuge) {
       console.log('[Centrifuge] ⚠️ Already connected, skipping reconnection');
       return;
@@ -88,9 +87,8 @@ export default function useSpeechToText(options = {}) {
         console.log('[Centrifuge] ❌ DISCONNECTED');
       }
     };
-  }, [sessionId, token]); // Only reconnect when sessionId or token changes
+  }, [sessionId, token]); 
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (interviewWsRef.current) {
@@ -110,7 +108,6 @@ export default function useSpeechToText(options = {}) {
     };
   }, []);
 
-  // Auto-start recording when ready
   useEffect(() => {
     if (!sessionId || !token || !isSupported || isListening) return;
     console.log('[Interview] Auto-starting recording...');
@@ -126,10 +123,7 @@ export default function useSpeechToText(options = {}) {
       setError('Session ID required');
       return;
     }
-    if (isListening) {
-      console.log('[Interview] Already listening, skipping start');
-      return;
-    }
+    if (isListening) return;
     setError(null);
 
     console.log('[Interview] Starting audio recording: sessionId', sessionId);
@@ -143,6 +137,11 @@ export default function useSpeechToText(options = {}) {
       const interviewWs = await connectInterviewWs(sessionId);
       interviewWsRef.current = interviewWs;
 
+      // 4. 🔥 Pass the socket instance up EXACTLY when it connects
+      if (callbacksRef.current.onWebSocketReady) {
+        callbacksRef.current.onWebSocketReady(interviewWs);
+      }
+
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -152,7 +151,7 @@ export default function useSpeechToText(options = {}) {
         }
       };
 
-      mediaRecorder.start(250); // Send audio chunks every 250ms
+      mediaRecorder.start(250);
       setIsListening(true);
       console.log('[Interview] 🟢 Recording Live - streaming audio to backend');
     } catch (err) {
@@ -186,7 +185,6 @@ export default function useSpeechToText(options = {}) {
     isSupported,
     error,
     startListening,
-    stopListening,
-    interviewWsRef, // Expose WebSocket ref for parent components
+    stopListening
   };
 }
