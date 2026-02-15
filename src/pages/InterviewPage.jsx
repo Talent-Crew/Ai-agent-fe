@@ -348,21 +348,12 @@ const handleWebSocketReady = useCallback((ws) => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col">
-            <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm">
+            <div>
                 <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-xl flex items-center justify-center shadow-lg">
-                                <span className="text-white font-bold text-lg">TC</span>
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold text-white">TalentCrew</h1>
-                                <p className="text-xs text-gray-400">AI Interview</p>
-                            </div>
-                        </div>
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-lg font-bold text-white">TalentCrew<span className="text-blue-900 text-xl">.</span></h1>
                         <Timer startTime={startTime} />
                     </div>
-                    <ProgressStepper stages={stages} currentStage={currentStage} />
                 </div>
             </div>
 
@@ -370,24 +361,24 @@ const handleWebSocketReady = useCallback((ws) => {
             <div className="flex-1 flex items-center justify-center p-8">
                 <div className="relative">
                     {/* Status Text */}
-                    <h3 className="text-center text-2xl font-semibold text-white mb-8">
+                    <h3 className="text-center text-2xl font-light text-white mb-8 italic">
                         {interviewState === 'idle' && "Starting interview..."}
-                        {interviewState === 'ai-thinking' && "🧠 AI is processing..."}
-                        {interviewState === 'ai-speaking' && "🤖 AI is speaking..."}
-                        {interviewState === 'user-speaking' && "🎤 Your turn to speak"}
+                        {interviewState === 'ai-thinking' && "AI is processing..."}
+                        {interviewState === 'ai-speaking' && "AI is speaking..."}
+                        {interviewState === 'user-speaking' && "Your turn to speak"}
                     </h3>
 
                     {/* Animated Orb */}
-                    <div className="relative w-48 h-48 mx-auto">
+                    <div className="relative w-56 h-56 mx-auto">
                         {/* Outer glow */}
                         <div
-                            className="absolute inset-0 rounded-full transition-all duration-500"
+                            className="absolute -inset-7 rounded-full transition-all duration-500"
                             style={{
                                 background: interviewState === 'ai-thinking' ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' :
                                     interviewState === 'ai-speaking' ? 'linear-gradient(135deg, #a855f7, #ec4899)' :
                                         interviewState === 'user-speaking' ? 'linear-gradient(135deg, #10b981, #3b82f6)' :
                                             'linear-gradient(135deg, #475569, #334155)',
-                                filter: 'blur(40px)',
+                                filter: 'blur(50px)',
                                 opacity: interviewState === 'idle' ? 0.2 : 0.6,
                                 transform: interviewState === 'ai-speaking' ? 'scale(1.2)' : 'scale(0.8)'
                             }}
@@ -395,7 +386,7 @@ const handleWebSocketReady = useCallback((ws) => {
 
                         {/* Inner orb */}
                         <div
-                            className="absolute inset-0 m-auto w-32 h-32 rounded-full animate-pulse transition-all duration-500"
+                            className="absolute inset-0 m-auto w-40 h-40 rounded-full animate-pulse transition-all duration-500"
                             style={{
                                 background: interviewState === 'ai-thinking' ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' :
                                     interviewState === 'ai-speaking' ? 'linear-gradient(135deg, #a855f7, #ec4899)' :
@@ -409,58 +400,40 @@ const handleWebSocketReady = useCallback((ws) => {
                 </div>
             </div>
 
-            {/* Interview Control Buttons */}
-            <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-center space-x-4">
-                        {/* Respeak Button - Only show when AI is thinking */}
-                        {interviewState === 'ai-thinking' && (
-                            <button
-                                onClick={handleRespeak}
-                                className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                <span>Respeak</span>
-                            </button>
+            {/* Interview Control Buttons - Google Meet Style */}
+            <div className="pb-16">
+                <div className="max-w-7xl mx-auto flex items-center justify-center space-x-4">
+                    {/* Respeak Button - Only show when AI is thinking */}
+                    {interviewState === 'ai-thinking' && (
+                        <button
+                            onClick={handleRespeak}
+                            className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+                        >
+                            <span>Respeak</span>
+                        </button>
+                    )}
+
+                    {/* Finished Speaking Button */}
+                    <button
+                        onClick={handleDoneSpeaking}
+                        disabled={isDoneSpeakingDisabled || isCompleted || isEvaluating}
+                        className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                        <span>Finished Speaking</span>
+                    </button>
+
+                    {/* End Interview Button */}
+                    <button
+                        onClick={endInterview}
+                        disabled={isCompleted || isEvaluating}
+                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                        {isEvaluating ? (
+                            <span>Generating Scorecard...</span>
+                        ) : (
+                            <span>End Interview</span>
                         )}
-
-                        {/* Finished Speaking Button */}
-                        <button
-                            onClick={handleDoneSpeaking}
-                            disabled={isDoneSpeakingDisabled || isCompleted || isEvaluating}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Finished Speaking</span>
-                        </button>
-
-                        {/* End Interview Button */}
-                        <button
-                            onClick={endInterview}
-                            disabled={isCompleted || isEvaluating}
-                            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                        >
-                            {isEvaluating ? (
-                                <>
-                                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    <span>Generating Scorecard...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    <span>End Interview</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
+                    </button>
                 </div>
             </div>
 
