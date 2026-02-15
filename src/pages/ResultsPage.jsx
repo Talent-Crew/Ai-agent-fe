@@ -72,7 +72,8 @@ export default function ResultsPage() {
             'HIRE': { text: 'HIRE', color: 'bg-green-500', icon: '✓' },
             'MAYBE': { text: 'MAYBE', color: 'bg-yellow-500', icon: '?' },
             'NO_HIRE': { text: 'NO HIRE', color: 'bg-red-500', icon: '✗' },
-            'REJECT': { text: 'REJECT', color: 'bg-red-600', icon: '✗' }
+            'REJECT': { text: 'REJECT', color: 'bg-red-600', icon: '✗' },
+            'INCOMPLETE': { text: 'INCOMPLETE', color: 'bg-gray-500', icon: '?' },
         };
         return badges[result] || badges['MAYBE'];
     };

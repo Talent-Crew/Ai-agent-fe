@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Centrifuge } from 'centrifuge';
 import InterviewHeader from '../components/interview/InterviewHeader';
-import ProgressStepper from '../components/interview/ProgressStepper';
 import Timer from '../components/interview/Timer';
 import ChatContainer from '../components/interview/ChatContainer';
 import InputController from '../components/interview/InputController';
@@ -36,7 +35,6 @@ export default function InterviewPage() {
 
     const {
         currentStage,
-        stages,
         messages,
         isThinking,
         startTime,
@@ -332,34 +330,35 @@ const handleWebSocketReady = useCallback((ws) => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col">
-            <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-[#6366F1] to-[#4F46E5] rounded-xl flex items-center justify-center shadow-lg">
-                                <span className="text-white font-bold text-lg">TC</span>
-                            </div>
-                            <div>
-                                <h1 className="text-lg font-bold text-white">TalentCrew</h1>
-                                <p className="text-xs text-gray-400">AI Interview</p>
-                            </div>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex flex-col relative overflow-hidden">
+            {/* Animated background elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute w-96 h-96 bg-[#6366F1]/20 rounded-full blur-3xl top-20 -left-20 animate-pulse"></div>
+                <div className="absolute w-96 h-96 bg-[#6366F1]/10 rounded-full blur-3xl bottom-20 -right-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute w-64 h-64 bg-[#6366F1]/10 rounded-full blur-3xl top-1/2 left-1/2 animate-pulse" style={{ animationDelay: '2s' }}></div>
+            </div>
+
+            {/* Navigation */}
+            <div className="fixed top-4 left-0 right-0 z-50 px-6 pointer-events-none">
+                <nav className="max-w-7xl mx-auto bg-gray-900/70 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl px-6 py-4 pointer-events-auto">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <span className="text-2xl font-bold text-white">TalentCrew<span className="text-4xl text-[#6366F1]">.</span></span>
                         </div>
                         <Timer startTime={startTime} />
                     </div>
-                    <ProgressStepper stages={stages} currentStage={currentStage} />
-                </div>
+                </nav>
             </div>
 
             {/* AI Animation Orb */}
-            <div className="flex-1 flex items-center justify-center p-8">
+            <div className="flex-1 flex items-center justify-center p-8 pt-24">
                 <div className="relative">
                     {/* Status Text */}
                     <h3 className="text-center text-2xl font-semibold text-white mb-8">
                         {interviewState === 'idle' && "Starting interview..."}
-                        {interviewState === 'ai-thinking' && "🧠 AI is processing..."}
-                        {interviewState === 'ai-speaking' && "🤖 AI is speaking..."}
-                        {interviewState === 'user-speaking' && "🎤 Your turn to speak"}
+                        {interviewState === 'ai-thinking' && "AI is processing..."}
+                        {interviewState === 'ai-speaking' && "AI is speaking..."}
+                        {interviewState === 'user-speaking' && "Your turn to speak"}
                     </h3>
 
                     {/* Animated Orb */}
@@ -395,8 +394,8 @@ const handleWebSocketReady = useCallback((ws) => {
             </div>
 
             {/* Interview Control Buttons */}
-            <div className="border-t border-gray-800 bg-gray-900/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="pb-safe">
+                <div className="max-w-7xl mx-auto px-6 py-8">
                     <div className="flex items-center justify-center space-x-4">
                         {/* Respeak Button - Only show when AI is thinking */}
                         {interviewState === 'ai-thinking' && (
@@ -415,7 +414,7 @@ const handleWebSocketReady = useCallback((ws) => {
                         <button
                             onClick={handleDoneSpeaking}
                             disabled={isDoneSpeakingDisabled || isCompleted || isEvaluating}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                            className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg shadow-blue-500/20 border border-blue-500/20"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -427,7 +426,7 @@ const handleWebSocketReady = useCallback((ws) => {
                         <button
                             onClick={endInterview}
                             disabled={isCompleted || isEvaluating}
-                            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                            className="px-8 py-3.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg shadow-red-500/20 border border-red-500/20"
                         >
                             {isEvaluating ? (
                                 <>
