@@ -255,44 +255,6 @@ export default function RoleCalibrationForm({ onSubmit }) {
                     </form>
                 </div>
             </div>
-                                                </svg>
-                                                <div>
-                                                    <p className="text-white font-medium">{resumeFileName}</p>
-                                                    <p className="text-sm text-gray-400">Click to change</p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
-                                                <p className="text-gray-300 font-medium mb-1">Click to upload or drag and drop</p>
-                                                <p className="text-sm text-gray-400">PDF, DOC, DOCX (Max 5MB)</p>
-                                                <p className="text-xs text-gray-500 mt-2">Help AI understand your background better</p>
-                                            </>
-                                        )}
-                                    </div>
-                                </label>
-                            </div>
-                            {errors.resume && <p className="text-red-400 text-sm mt-2">{errors.resume}</p>}
-                        </div>
-
-                        {/* Submit Button */}
-                        <div className="pt-4">
-                            <Button
-                                type="submit"
-                                size="lg"
-                                className="w-full md:w-auto px-12 bg-[#6366F1] hover:bg-[#4F46E5] text-white"
-                            >
-                                Start AI Interview
-                                <svg className="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
-                            </Button>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
             {/* Confirmation Modal */}
             {showConfirmModal && (

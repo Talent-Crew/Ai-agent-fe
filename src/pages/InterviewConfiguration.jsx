@@ -210,21 +210,21 @@ export default function InterviewConfiguration() {
                                 type="text"
                                 value={formData.stack}
                                 onChange={(e) => setFormData({ ...formData, stack: e.target.value })}
-                                placeholder="e.g., React, TypeScript, Node.js"
+                                placeholder="e.g., MERN, MEAN"
                                 className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                             />
                         </div>
 
-                        {/* Primary Language */}
+                        {/* Tech Languages */}
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Primary Programming Language *
+                                Tech Languages * <span className="text-gray-500 text-xs">(comma-separated)</span>
                             </label>
                             <input
                                 type="text"
                                 value={formData.primary_language}
                                 onChange={(e) => setFormData({ ...formData, primary_language: e.target.value })}
-                                placeholder="e.g., JavaScript"
+                                placeholder="e.g., JavaScript, Python, Java"
                                 className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                             />
                         </div>
