@@ -1,10 +1,10 @@
-# 🎯 TalentCrew AI - Intelligent Interview Platform
+# TalentCrew AI - Intelligent Interview Platform
 
 TalentCrew AI is an enterprise-grade AI-powered interview platform that conducts automated voice interviews with candidates and provides comprehensive scorecards for recruiters. The platform uses real-time WebSocket communication, voice-to-text conversion, and AI-driven conversation management to create a seamless interview experience.
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Overview](#-overview)
 - [Architecture](#-architecture)
@@ -26,7 +26,7 @@ TalentCrew AI is an enterprise-grade AI-powered interview platform that conducts
 
 ---
 
-## 🎨 Overview
+## Overview
 
 TalentCrew AI is a modern React application built with Vite that enables:
 - **Automated AI-powered interviews** with real-time voice interaction
@@ -43,7 +43,7 @@ TalentCrew AI is a modern React application built with Vite that enables:
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### High-Level Architecture
 
@@ -103,7 +103,7 @@ TalentCrew AI is a modern React application built with Vite that enables:
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 ### Core Technologies
 - **React 19.2.0** - UI library with latest features
@@ -133,7 +133,7 @@ TalentCrew AI is a modern React application built with Vite that enables:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ### Complete File Tree
 
@@ -267,7 +267,7 @@ TalentCrew-ai/
 
 ---
 
-## 🔄 Data Flow
+## Data Flow
 
 ### 1. Interview Session Flow
 
@@ -389,7 +389,7 @@ Candidate Browser                          Backend Server
 
 ---
 
-## 🌟 Core Features
+## Core Features
 
 ### 1. AI-Powered Voice Interviews
 - **Real-time voice interaction** using Web Audio API
@@ -444,7 +444,7 @@ Candidate Browser                          Backend Server
 
 ---
 
-## 🧩 Component Architecture
+## Component Architecture
 
 ### Design Principles
 1. **Atomic Design**: Components broken into atoms → molecules → organisms
@@ -507,7 +507,7 @@ const {
 
 ---
 
-## 🎮 State Management
+## State Management
 
 ### Interview State Machine
 
@@ -564,7 +564,7 @@ const tabSwitchDetectedRef = useRef(false);
 
 ---
 
-## 🔌 WebSocket Communication
+## WebSocket Communication
 
 ### Connection Setup
 
@@ -621,7 +621,7 @@ worklet.port.onmessage = (event) => {
 
 ---
 
-## 🔐 Authentication Flow
+## Authentication Flow
 
 ### AuthContext Structure
 
@@ -729,7 +729,7 @@ onAudioEnded() {
 
 ---
 
-## 🚫 Tab-Switch Detection
+## Tab-Switch Detection
 
 ### Detection Methods
 
@@ -774,10 +774,10 @@ window.addEventListener('keydown', (e) => {
 - Displayed **after form submission** and **before interview starts**
 - Blocks interview start until acknowledged
 - Lists all prohibited actions:
-  - ❌ No switching browser tabs
-  - ❌ No switching applications
-  - ❌ No minimizing window
-  - ❌ No keyboard shortcuts
+  - No switching browser tabs
+  - No switching applications
+  - No minimizing window
+  - No keyboard shortcuts
 - Requires explicit acknowledgment to proceed
 
 ### Termination Flow
@@ -805,7 +805,7 @@ function terminateInterview(reason) {
 
 ---
 
-## 🌐 API Integration
+## API Integration
 
 ### Base Configuration
 
@@ -895,7 +895,7 @@ try {
 
 ---
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
 ### Prerequisites
 
@@ -955,7 +955,7 @@ The frontend requires a running backend. See backend repository for setup:
 
 ---
 
-## 👨‍💻 Development Guide
+## Development Guide
 
 ### Available Scripts
 
@@ -1083,7 +1083,7 @@ export const api = {
 
 ---
 
-## 🏭 Production Deployment
+## Production Deployment
 
 ### Build Process
 
@@ -1192,87 +1192,3 @@ CMD ["nginx", "-g", "daemon off;"]
    ```
 
 ---
-
-## 🔮 Future Enhancements
-
-### Planned Features
-
-#### Short-term (Q1-Q2 2026)
-- [ ] **Video Recording**: Record candidate video during interview
-- [ ] **Multi-language Support**: I18n for global reach
-- [ ] **Advanced Analytics**: More detailed recruiter insights
-- [ ] **Interview Templates**: Customizable question sets per role
-- [ ] **Bulk Operations**: Process multiple candidates at once
-- [ ] **Export Functionality**: PDF/CSV scorecard exports
-
-#### Medium-term (Q3-Q4 2026)
-- [ ] **Mobile App**: React Native mobile application
-- [ ] **AI Interviewer Customization**: Personality/tone configuration
-- [ ] **Integration APIs**: Connect with ATS systems (Greenhouse, Lever)
-- [ ] **Advanced Proctoring**: Eye tracking, face detection
-- [ ] **Collaborative Evaluation**: Multi-recruiter review system
-- [ ] **Candidate Portal**: Self-service interview scheduling
-
-#### Long-term (2027+)
-- [ ] **AI-Powered Coaching**: Real-time feedback during interview
-- [ ] **Predictive Analytics**: ML-based hiring predictions
-- [ ] **Blockchain Verification**: Immutable interview records
-- [ ] **VR Interviews**: Virtual reality interview experiences
-- [ ] **Global Talent Pool**: Cross-organizational candidate sharing
-
-### Technical Debt
-
-- [ ] **TypeScript Migration**: Convert codebase to TypeScript
-- [ ] **Unit Testing**: Achieve 80%+ test coverage
-- [ ] **E2E Testing**: Cypress/Playwright integration
-- [ ] **Accessibility Audit**: WCAG 2.1 AAA compliance
-- [ ] **Performance Audit**: Lighthouse score 95+
-- [ ] **Security Audit**: OWASP Top 10 compliance
-
-### Architecture Improvements
-
-- [ ] **Micro-frontends**: Break into smaller applications
-- [ ] **GraphQL**: Replace REST with GraphQL
-- [ ] **State Management**: Introduce Redux/Zustand for complex state
-- [ ] **Web Workers**: Offload heavy computations
-- [ ] **PWA**: Full Progressive Web App capabilities
-
----
-
-## 📄 License
-
-MIT License - Copyright (c) 2026 TalentCrew AI
-
----
-
-## 🤝 Contributing
-
-### Development Workflow
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-### Code Review Process
-
-- All PRs require 1 approval
-- Must pass CI/CD checks
-- Must include tests for new features
-- Must update documentation
-
----
-
-## 📞 Support
-
-- **Documentation**: [docs.talentcrew.com](https://docs.talentcrew.com)
-- **Issues**: [GitHub Issues](https://github.com/your-org/talentcrew-ai/issues)
-- **Email**: support@talentcrew.com
-- **Discord**: [Join our community](https://discord.gg/talentcrew)
-
----
-
-**Built with ❤️ by the TalentCrew Team**
-
-*Last Updated: February 15, 2026*
