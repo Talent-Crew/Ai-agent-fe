@@ -31,104 +31,97 @@ export default function LandingPage() {
             </div>
 
             {/* Navigation */}
-            <nav className="relative z-50 px-6 py-6 border-b border-gray-800/50">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-[#6366F1] rounded-xl flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-xl">TC</span>
+            <div className="fixed top-4 left-0 right-0 z-50 px-6 pointer-events-none">
+                <nav className="max-w-7xl mx-auto bg-gray-900/70 backdrop-blur-xl border border-gray-800/50 rounded-2xl shadow-2xl px-6 py-4 pointer-events-auto">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <span className="text-2xl font-bold text-white">TalentCrew<span className="text-4xl text-[#6366F1]">.</span></span>
                         </div>
-                        <span className="text-2xl font-bold text-white">TalentCrew</span>
-                    </div>
 
-                    <div className="hidden md:flex items-center space-x-8">
-                        <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors font-medium">How It Works</a>
+                        <div className="hidden md:flex items-center space-x-8">
+                            <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors font-medium">How It Works</a>
 
-                        {!isAuthenticated && (
-                            <Link to="/recruiter/auth" className="text-gray-300 hover:text-white transition-colors font-medium">
-                                Recruiter Login
-                            </Link>
-                        )}
+                            {!isAuthenticated && (
+                                <Link to="/recruiter/auth" className="text-gray-300 hover:text-white transition-colors font-medium">
+                                    Recruiter Login
+                                </Link>
+                            )}
 
-                        <Link to="/interview">
-                            <Button variant="primary" size="md" className="bg-[#6366F1] hover:bg-[#4F46E5] shadow-lg text-white">
-                                Get Started
-                            </Button>
-                        </Link>
-
-                        {isAuthenticated && (
-                            /* Profile Dropdown */
-                            <div className="relative profile-dropdown">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowProfileMenu(!showProfileMenu);
-                                    }}
-                                    className="flex items-center space-x-2 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg px-3 py-2 transition-colors"
-                                >
-                                    <div className="w-8 h-8 bg-[#6366F1] rounded-full flex items-center justify-center">
-                                        <span className="text-white font-semibold text-sm">
-                                            {user?.name?.charAt(0).toUpperCase() || 'R'}
-                                        </span>
-                                    </div>
-                                    <span className="text-white font-medium text-sm">{user?.name || user?.email?.split('@')[0]}</span>
-                                    <svg
-                                        className={`w-4 h-4 text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                            {isAuthenticated && (
+                                /* Profile Dropdown */
+                                <div className="relative profile-dropdown">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowProfileMenu(!showProfileMenu);
+                                        }}
+                                        className="flex items-center space-x-2 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg px-3 py-2 transition-colors"
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-
-                                {showProfileMenu && (
-                                    <div
-                                        className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl py-2 z-[100]"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <div className="px-4 py-3 border-b border-gray-700">
-                                            <p className="text-sm text-gray-400">Signed in as</p>
-                                            <p className="text-white font-medium truncate">{user?.email}</p>
+                                        <div className="w-8 h-8 bg-[#6366F1] rounded-full flex items-center justify-center">
+                                            <span className="text-white font-semibold text-sm">
+                                                {user?.name?.charAt(0).toUpperCase() || 'R'}
+                                            </span>
                                         </div>
-
-                                        <Link
-                                            to="/recruiter"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setShowProfileMenu(false);
-                                            }}
-                                            className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-700/50 transition-colors text-gray-300 hover:text-white"
+                                        <span className="text-white font-medium text-sm">{user?.name || user?.email?.split('@')[0]}</span>
+                                        <svg
+                                            className={`w-4 h-4 text-gray-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
                                         >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                            </svg>
-                                            <span>Dashboard</span>
-                                        </Link>
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
 
-                                        <div className="border-t border-gray-700 mt-2 pt-2">
-                                            <button
+                                    {showProfileMenu && (
+                                        <div
+                                            className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl py-2 z-[100]"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="px-4 py-3 border-b border-gray-700">
+                                                <p className="text-sm text-gray-400">Signed in as</p>
+                                                <p className="text-white font-medium truncate">{user?.email}</p>
+                                            </div>
+
+                                            <Link
+                                                to="/recruiter"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleLogout();
+                                                    setShowProfileMenu(false);
                                                 }}
-                                                className="flex items-center space-x-3 px-4 py-3 hover:bg-red-900/20 transition-colors text-red-400 hover:text-red-300 w-full text-left"
+                                                className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-700/50 transition-colors text-gray-300 hover:text-white"
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                                                 </svg>
-                                                <span>Logout</span>
-                                            </button>
+                                                <span>Dashboard</span>
+                                            </Link>
+
+                                            <div className="border-t border-gray-700 mt-2 pt-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleLogout();
+                                                    }}
+                                                    className="flex items-center space-x-3 px-4 py-3 hover:bg-red-900/20 transition-colors text-red-400 hover:text-red-300 w-full text-left"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                    </svg>
+                                                    <span>Logout</span>
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </nav>
+                </nav>
+            </div>
 
             {/* Hero Section */}
-            <main className="relative z-10 px-6 pt-20 pb-32">
+            <main className="relative z-10 px-6 pt-40 pb-32">
                 <div className="max-w-7xl mx-auto">
                     {/* Main Heading */}
                     <div className="text-center max-w-4xl mx-auto mb-12">
@@ -143,7 +136,7 @@ export default function LandingPage() {
                     <div className="flex justify-center mb-16">
                         <Link to="/interview">
                             <Button size="lg" className="bg-[#6366F1] hover:bg-[#4F46E5] text-white px-8 py-4 text-lg shadow-2xl">
-                                Start Interview Now
+                                Try Demo
                                 <svg className="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
@@ -177,8 +170,8 @@ export default function LandingPage() {
                                     <span className="text-white font-bold text-xl">1</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Initiation & Role Calibration</h3>
-                                    <p className="text-gray-400">Candidate selects path, AI sets expectations and calibrates difficulty</p>
+                                    <h3 className="text-xl font-bold text-white mb-2">Personalized Interview Setup</h3>
+                                    <p className="text-gray-400">Every interview is tailored to match the specific role and skills you're applying for</p>
                                 </div>
                             </div>
                         </div>
@@ -190,8 +183,8 @@ export default function LandingPage() {
                                     <span className="text-white font-bold text-xl">2</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Adaptive Technical Deep-Dive</h3>
-                                    <p className="text-gray-400">Dynamic questions adjust in real-time based on responses</p>
+                                    <h3 className="text-xl font-bold text-white mb-2">Convenient Access</h3>
+                                    <p className="text-gray-400">Receive a unique interview link and start at your convenience—no scheduling hassles</p>
                                 </div>
                             </div>
                         </div>
@@ -203,8 +196,8 @@ export default function LandingPage() {
                                     <span className="text-white font-bold text-xl">3</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Communication Assessment</h3>
-                                    <p className="text-gray-400">AI evaluates soft skills and communication abilities</p>
+                                    <h3 className="text-xl font-bold text-white mb-2">Natural Conversation</h3>
+                                    <p className="text-gray-400">Talk naturally with our AI interviewer while we capture your responses in real-time</p>
                                 </div>
                             </div>
                         </div>
@@ -216,8 +209,8 @@ export default function LandingPage() {
                                     <span className="text-white font-bold text-xl">4</span>
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-white mb-2">Evaluation & Scoring</h3>
-                                    <p className="text-gray-400">Automated scorecard with hire recommendation instantly</p>
+                                    <h3 className="text-xl font-bold text-white mb-2">Instant Feedback & Results</h3>
+                                    <p className="text-gray-400">Get comprehensive feedback on your performance with actionable insights for improvement</p>
                                 </div>
                             </div>
                         </div>
@@ -227,7 +220,7 @@ export default function LandingPage() {
                     <div className="text-center">
                         <Link to="/interview">
                             <Button size="lg" className="bg-[#6366F1] hover:bg-[#4F46E5] text-white px-12 py-4 text-lg shadow-2xl">
-                                Experience the AI Interview
+                                Try Demo
                                 <svg className="w-5 h-5 ml-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>

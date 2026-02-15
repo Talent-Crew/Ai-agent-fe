@@ -6,7 +6,6 @@ export default function ConfigurationView() {
     const [saveStatus, setSaveStatus] = useState('');
     const [formData, setFormData] = useState({
         title: '',
-        stack: '',
         primary_language: '',
         experience_level: '',
         core_skills: '',
@@ -107,7 +106,6 @@ export default function ConfigurationView() {
     const handleReset = () => {
         setFormData({
             title: '',
-            stack: '',
             primary_language: '',
             experience_level: '',
             core_skills: '',
@@ -158,20 +156,6 @@ export default function ConfigurationView() {
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             placeholder="e.g., Senior Frontend Developer"
-                            className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
-                        />
-                    </div>
-
-                    {/* Stack */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Tech Stack * <span className="text-gray-500 text-xs">(comma-separated)</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.stack}
-                            onChange={(e) => setFormData({ ...formData, stack: e.target.value })}
-                            placeholder="e.g., React, TypeScript, Node.js"
                             className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:border-transparent"
                         />
                     </div>
@@ -246,7 +230,7 @@ export default function ConfigurationView() {
                         </Button>
                         <Button
                             onClick={handleSave}
-                            disabled={!formData.title || !formData.stack || !formData.primary_language || !formData.experience_level || !formData.core_skills || !formData.evaluation_focus}
+                            disabled={!formData.title || !formData.primary_language || !formData.experience_level || !formData.core_skills || !formData.evaluation_focus}
                             className="bg-[#6366F1] hover:bg-[#4F46E5] text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
